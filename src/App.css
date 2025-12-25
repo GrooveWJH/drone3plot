@@ -1,0 +1,352 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) 1fr;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, rgba(78, 110, 114, 0.25), transparent 45%),
+    linear-gradient(130deg, #0b1114 0%, #101b1f 45%, #0f1619 100%);
+  color: #e6edf0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2.5rem 2.25rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(11, 17, 20, 0.82);
+  backdrop-filter: blur(18px);
+  overflow-y: auto;
+}
+
+.panel-header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+}
+
+.panel-header p {
+  margin: 0;
+  color: rgba(230, 237, 240, 0.7);
+  font-size: 0.95rem;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.2rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(12, 18, 22, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.panel-section h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(230, 237, 240, 0.75);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field label {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(230, 237, 240, 0.65);
+}
+
+.field input[type='file'],
+.field input[type='number'] {
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 14, 16, 0.9);
+  color: #e6edf0;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(9, 13, 15, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.stats span {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(230, 237, 240, 0.6);
+}
+
+.stats strong {
+  font-size: 1rem;
+}
+
+.status {
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(56, 76, 84, 0.35);
+  color: #e7f4f5;
+  font-size: 0.9rem;
+}
+
+.status.error {
+  background: rgba(141, 46, 46, 0.35);
+  color: #ffd4d4;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.primary {
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  background: #f4b156;
+  color: #1b1507;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.toggle button {
+  padding: 0.55rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(13, 19, 22, 0.6);
+  color: #e6edf0;
+  cursor: pointer;
+}
+
+.toggle button.active {
+  border-color: rgba(244, 177, 86, 0.7);
+  background: rgba(244, 177, 86, 0.2);
+  color: #f7e2c2;
+}
+
+.waypoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.waypoint-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.waypoint-coords {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.7rem;
+  color: rgba(230, 237, 240, 0.7);
+}
+
+.coord-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.coord-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(230, 237, 240, 0.55);
+}
+
+.coord-row input {
+  width: 64px;
+  /* padding: 0.2rem 0.35rem; */
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(9, 13, 15, 0.6);
+  color: #e6edf0;
+  appearance: textfield;
+}
+
+.coord-row input::-webkit-outer-spin-button,
+.coord-row input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.rotation-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.rotation-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.rotation-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: rgba(230, 237, 240, 0.6);
+}
+
+.rotation-buttons {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.rotation-buttons .icon {
+  padding: 0.2rem 0.5rem;
+  width: auto;
+  height: auto;
+}
+
+.rotation-value {
+  font-size: 0.75rem;
+  color: rgba(230, 237, 240, 0.75);
+}
+.yaw-row {
+  justify-content: space-between;
+}
+
+.yaw-row .icon {
+  margin-left: auto;
+}
+
+
+.waypoint-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(12, 18, 22, 0.55);
+}
+
+.waypoint-row.selected {
+  border-color: rgba(244, 177, 86, 0.65);
+  background: rgba(244, 177, 86, 0.12);
+}
+
+.waypoint-row .ghost {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.waypoint-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.waypoint-actions .icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(9, 13, 15, 0.6);
+  color: #e6edf0;
+  cursor: pointer;
+}
+
+.waypoint-actions .icon.danger {
+  color: #ffb4b4;
+  border-color: rgba(255, 180, 180, 0.3);
+}
+
+.empty {
+  margin: 0;
+  color: rgba(230, 237, 240, 0.6);
+  font-size: 0.9rem;
+}
+
+.hint ul {
+  margin: 0.2rem 0 0;
+  padding-left: 1.2rem;
+  color: rgba(230, 237, 240, 0.65);
+  font-size: 0.9rem;
+}
+
+.viewport {
+  position: relative;
+  min-height: 100vh;
+}
+
+canvas {
+  display: block;
+}
+
+.waypoint-label {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(9, 13, 15, 0.85);
+  color: #fef3c7;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  white-space: nowrap;
+  pointer-events: none;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.waypoint-sub {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+@media (max-width: 980px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .viewport {
+    min-height: 60vh;
+  }
+}
+.xyz-row {
+  flex-wrap: nowrap;
+}
