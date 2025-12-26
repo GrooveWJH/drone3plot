@@ -3,7 +3,7 @@ import path from 'node:path'
 
 const DEFAULT_BUDGET_MB = 100
 const DEFAULT_BYTES_PER_POINT = 20
-const HEADER_MIN_BYTES = 375
+const HEADER_MIN_BYTES = 375 
 
 const bytesToMB = (bytes) => bytes / (1024 * 1024)
 

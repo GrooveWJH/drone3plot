@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { PointCloudStats, WaypointData } from '../types/mission'
+import { UI_CONFIG } from '../config/ui'
 
 export type SidebarProps = {
   stats: PointCloudStats | null
@@ -105,6 +106,7 @@ const Sidebar = ({
             onChange={(event) => {
               const file = event.target.files?.[0]
               if (file) onFileSelect(file)
+              event.currentTarget.value = ''
             }}
           />
         </div>
@@ -135,11 +137,17 @@ const Sidebar = ({
             <div key={axis} className="rotation-row">
               <span className="rotation-label">{axis.toUpperCase()}</span>
               <div className="rotation-buttons">
-                <button className="icon" onClick={() => onRotateCloud(axis, -90)}>
-                  -90
+                <button
+                  className="icon"
+                  onClick={() => onRotateCloud(axis, -UI_CONFIG.pointCloud.rotationStep)}
+                >
+                  -{UI_CONFIG.pointCloud.rotationStep}
                 </button>
-                <button className="icon" onClick={() => onRotateCloud(axis, 90)}>
-                  +90
+                <button
+                  className="icon"
+                  onClick={() => onRotateCloud(axis, UI_CONFIG.pointCloud.rotationStep)}
+                >
+                  +{UI_CONFIG.pointCloud.rotationStep}
                 </button>
               </div>
               <span className="rotation-value">{cloudRotation[axis === 'x' ? 0 : axis === 'y' ? 1 : 2]}°</span>

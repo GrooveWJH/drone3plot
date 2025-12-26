@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import type { TransformControls as TransformControlsImpl } from 'three-stdlib'
 import type { TransformMode, WaypointData } from '../types/mission'
+import { UI_CONFIG } from '../config/ui'
 
 export type WaypointMarkerProps = {
   waypoint: WaypointData
@@ -76,14 +77,14 @@ const WaypointMarker = ({
         }}
       >
         <mesh>
-          <sphereGeometry args={[0.5, 18, 18]} />
+          <sphereGeometry args={[UI_CONFIG.waypoint.sphereRadius, 18, 18]} />
           <meshStandardMaterial color={selected ? '#f97316' : '#fbbf24'} />
         </mesh>
-        <mesh position={[0, 0, 1.25]} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.25, 0.8, 10]} />
+        <mesh position={[0, 0, UI_CONFIG.waypoint.coneOffsetZ]} rotation={[Math.PI / 2, 0, 0]}>
+          <coneGeometry args={[UI_CONFIG.waypoint.coneRadius, UI_CONFIG.waypoint.coneHeight, 10]} />
           <meshStandardMaterial color="#fde68a" />
         </mesh>
-        <Html position={[0, 1.2, 0]} center>
+        <Html position={[0, UI_CONFIG.waypoint.labelOffsetY, 0]} center>
           <div className="waypoint-label">#{index + 1}</div>
         </Html>
       </group>

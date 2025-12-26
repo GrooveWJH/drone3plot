@@ -102,6 +102,7 @@ const analyzeLasColors = async (filePath, sampleTarget = DEFAULT_SAMPLE_TARGET) 
     sum: [0, 0, 0],
     zeros: 0,
     samples: 0,
+    firstColors: [],
   }
 
   const handle = await fs.open(filePath, 'r')
@@ -133,6 +134,9 @@ const analyzeLasColors = async (filePath, sampleTarget = DEFAULT_SAMPLE_TARGET) 
         stats.sum[2] += b
         if (r === 0 && g === 0 && b === 0) stats.zeros += 1
         stats.samples += 1
+        if (stats.firstColors.length < 10) {
+          stats.firstColors.push([r, g, b])
+        }
 
         if (stats.samples >= target) break
       }
@@ -158,6 +162,7 @@ const analyzeLasColors = async (filePath, sampleTarget = DEFAULT_SAMPLE_TARGET) 
     zeroRatio,
     maxValue,
     suggestedScale,
+    firstColors: stats.firstColors,
   }
 }
 
@@ -192,6 +197,9 @@ const printReport = async (filePath) => {
   console.log(`  RGB 均值: ${result.mean.map((v) => v.toFixed(1)).join(', ')}`)
   console.log(`  全零比例: ${(result.zeroRatio * 100).toFixed(2)}%`)
   console.log(`  建议归一化: / ${result.suggestedScale}`)
+  if (result.firstColors.length > 0) {
+    console.log(`  前 10 个颜色: ${result.firstColors.map((item) => item.join(',')).join(' | ')}`)
+  }
 }
 
 const main = async () => {
