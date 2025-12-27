@@ -1,0 +1,16 @@
+{
+  "name": "Default Trajectory",
+  "createdAt": "2025-01-01T00:00:00Z",
+  "waypoints": [
+    { "x": 0, "y": 0, "z": 0, "yaw": 0, "takePhoto": false },
+    { "x": 5, "y": 0, "z": 2, "yaw": 15, "takePhoto": true },
+    { "x": 10, "y": 2, "z": 4, "yaw": 35, "takePhoto": false },
+    { "x": 14, "y": 4, "z": 4, "yaw": 55, "takePhoto": true },
+    { "x": 18, "y": 6, "z": 3, "yaw": 70, "takePhoto": false },
+    { "x": 22, "y": 7, "z": 1, "yaw": 90, "takePhoto": true },
+    { "x": 25, "y": 6, "z": 2, "yaw": 120, "takePhoto": false },
+    { "x": 28, "y": 4, "z": 5, "yaw": 150, "takePhoto": true },
+    { "x": 30, "y": 2, "z": 3, "yaw": 190, "takePhoto": false },
+    { "x": 32, "y": 0, "z": 1, "yaw": 220, "takePhoto": true }
+  ]
+}

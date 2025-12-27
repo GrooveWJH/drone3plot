@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { PointCloudStats, WaypointData } from '../types/mission'
 import { UI_CONFIG } from '../config/ui'
+import type { TrajectoryMeta } from '../types/mission'
 
 export type SidebarProps = {
   stats: PointCloudStats | null
@@ -13,7 +14,20 @@ export type SidebarProps = {
   onSelectWaypoint: (id: string) => void
   onDeleteWaypoint: (id: string) => void
   onReorderWaypoint: (id: string, direction: 'up' | 'down') => void
-  onUpdateWaypoint: (id: string, position: [number, number, number], rotation: [number, number, number]) => void
+  onUpdateWaypoint: (
+    id: string,
+    position: [number, number, number],
+    rotation: [number, number, number],
+    takePhoto?: boolean
+  ) => void
+  onTogglePhoto: (id: string, value: boolean) => void
+  trajectoryId: string
+  trajectoryName: string
+  trajectoryOptions: TrajectoryMeta[]
+  onSelectTrajectory: (id: string) => void
+  onExportTrajectory: () => void
+  onCreateTrajectory: () => void
+  onRenameTrajectory: (value: string) => void
   cloudRotation: [number, number, number]
   onRotateCloud: (axis: 'x' | 'y' | 'z', delta: number) => void
 }
@@ -40,6 +54,14 @@ const Sidebar = ({
   onDeleteWaypoint,
   onReorderWaypoint,
   onUpdateWaypoint,
+  onTogglePhoto,
+  trajectoryId,
+  trajectoryName,
+  trajectoryOptions,
+  onSelectTrajectory,
+  onExportTrajectory,
+  onCreateTrajectory,
+  onRenameTrajectory,
   cloudRotation,
   onRotateCloud,
 }: SidebarProps) => {
@@ -96,9 +118,9 @@ const Sidebar = ({
       </div>
 
       <section className="panel-section">
-        <h2>Point Cloud</h2>
+        <h2>点云</h2>
         <div className="field">
-          <label htmlFor="las-file">Load LAS/LAZ</label>
+          <label htmlFor="las-file">加载 LAS/LAZ</label>
           <input
             id="las-file"
             type="file"
@@ -113,25 +135,63 @@ const Sidebar = ({
         {stats && (
           <div className="stats">
             <div>
-              <span>Total points</span>
+              <span>总点数</span>
               <strong>{formatNumber(stats.totalPoints)}</strong>
             </div>
             <div>
-              <span>Loaded points</span>
+              <span>加载点数</span>
               <strong>{formatNumber(stats.loadedPoints)}</strong>
             </div>
             <div>
-              <span>Sample every</span>
+              <span>采样步长</span>
               <strong>{stats.sampleEvery}</strong>
             </div>
           </div>
         )}
-        {isLoading && <div className="status">Streaming LAS chunks…</div>}
+        {isLoading && <div className="status">正在加载 LAS…</div>}
         {error && <div className="status error">{error}</div>}
       </section>
 
       <section className="panel-section">
-        <h2>Cloud Rotation</h2>
+        <h2>航线</h2>
+        <div className="field">
+          <label htmlFor="trajectory-select">选择航线</label>
+          <select
+            id="trajectory-select"
+            value={trajectoryId}
+            onChange={(event) => onSelectTrajectory(event.target.value)}
+          >
+            {trajectoryOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="trajectory-name">航线名称</label>
+          <input
+            id="trajectory-name"
+            type="text"
+            value={trajectoryName}
+            onChange={(event) => onRenameTrajectory(event.target.value)}
+          />
+        </div>
+        <div className="trajectory-actions">
+          <button className="ghost" onClick={onCreateTrajectory}>
+            新建航线
+          </button>
+          <button className="primary" onClick={onExportTrajectory}>
+            保存航线
+          </button>
+        </div>
+        <p className="field-help">
+          保存后会下载 JSON 文件，请放入 trajectories 目录。
+        </p>
+      </section>
+
+      <section className="panel-section">
+        <h2>点云旋转</h2>
         <div className="rotation-grid">
           {(['x', 'y', 'z'] as Axis[]).map((axis) => (
             <div key={axis} className="rotation-row">
@@ -158,13 +218,13 @@ const Sidebar = ({
 
       <section className="panel-section">
         <div className="section-header">
-          <h2>Waypoints</h2>
+          <h2>航点</h2>
           <button className="primary" onClick={onAddWaypoint}>
-            Add waypoint
+            添加航点
           </button>
         </div>
         <div className="waypoint-list">
-          {waypoints.length === 0 && <p className="empty">No waypoints yet.</p>}
+          {waypoints.length === 0 && <p className="empty">暂无航点</p>}
           {waypoints.map((waypoint, index) => (
             <div
               key={waypoint.id}
@@ -174,8 +234,8 @@ const Sidebar = ({
                 <button className="ghost" onClick={() => onSelectWaypoint(waypoint.id)}>
                   #{index + 1}
                 </button>
-                <div className="waypoint-coords">
-                  <div className="coord-row xyz-row">
+                <div className="waypoint-coords compact">
+                  <div className="coord-row compact-row">
                     <label>
                       x
                       <input
@@ -189,7 +249,8 @@ const Sidebar = ({
                             onUpdateWaypoint(
                               waypoint.id,
                               [parsed, waypoint.position[1], waypoint.position[2]],
-                              waypoint.rotation
+                              waypoint.rotation,
+                              waypoint.takePhoto
                             )
                           )
                         }}
@@ -202,7 +263,8 @@ const Sidebar = ({
                               onUpdateWaypoint(
                                 waypoint.id,
                                 [parsed, waypoint.position[1], waypoint.position[2]],
-                                waypoint.rotation
+                                waypoint.rotation,
+                                waypoint.takePhoto
                               )
                           )
                         }}
@@ -221,7 +283,8 @@ const Sidebar = ({
                             onUpdateWaypoint(
                               waypoint.id,
                               [waypoint.position[0], parsed, waypoint.position[2]],
-                              waypoint.rotation
+                              waypoint.rotation,
+                              waypoint.takePhoto
                             )
                           )
                         }}
@@ -234,7 +297,8 @@ const Sidebar = ({
                               onUpdateWaypoint(
                                 waypoint.id,
                                 [waypoint.position[0], parsed, waypoint.position[2]],
-                                waypoint.rotation
+                                waypoint.rotation,
+                                waypoint.takePhoto
                               )
                           )
                         }}
@@ -253,7 +317,8 @@ const Sidebar = ({
                             onUpdateWaypoint(
                               waypoint.id,
                               [waypoint.position[0], waypoint.position[1], parsed],
-                              waypoint.rotation
+                              waypoint.rotation,
+                              waypoint.takePhoto
                             )
                           )
                         }}
@@ -266,14 +331,13 @@ const Sidebar = ({
                               onUpdateWaypoint(
                                 waypoint.id,
                                 [waypoint.position[0], waypoint.position[1], parsed],
-                                waypoint.rotation
+                                waypoint.rotation,
+                                waypoint.takePhoto
                               )
                           )
                         }}
                       />
                     </label>
-                  </div>
-                  <div className="coord-row yaw-row">
                     <label>
                       yaw
                       <input
@@ -291,7 +355,8 @@ const Sidebar = ({
                             onUpdateWaypoint(
                               waypoint.id,
                               waypoint.position,
-                              [0, degToRad(normalized), 0]
+                              [0, degToRad(normalized), 0],
+                              waypoint.takePhoto
                             )
                           })
                         }}
@@ -302,7 +367,8 @@ const Sidebar = ({
                             onUpdateWaypoint(
                               waypoint.id,
                               waypoint.position,
-                              [0, degToRad(normalized), 0]
+                              [0, degToRad(normalized), 0],
+                              waypoint.takePhoto
                             )
                           })
                           if (!committed) {
@@ -313,12 +379,22 @@ const Sidebar = ({
                         }}
                       />
                     </label>
+                  </div>
+                  <div className="coord-row compact-actions">
+                    <label className="toggle-inline">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(waypoint.takePhoto)}
+                        onChange={(event) => onTogglePhoto(waypoint.id, event.target.checked)}
+                      />
+                      拍照
+                    </label>
                     <button
                       className="icon danger"
                       onClick={() => onDeleteWaypoint(waypoint.id)}
-                      aria-label="Delete"
+                      aria-label="删除"
                     >
-                      ✕
+                      删除
                     </button>
                   </div>
                 </div>
@@ -328,7 +404,7 @@ const Sidebar = ({
                   className="icon"
                   onClick={() => onReorderWaypoint(waypoint.id, 'up')}
                   disabled={index === 0}
-                  aria-label="Move up"
+                  aria-label="上移"
                 >
                   ↑
                 </button>
@@ -336,7 +412,7 @@ const Sidebar = ({
                   className="icon"
                   onClick={() => onReorderWaypoint(waypoint.id, 'down')}
                   disabled={index === waypoints.length - 1}
-                  aria-label="Move down"
+                  aria-label="下移"
                 >
                   ↓
                 </button>
@@ -346,14 +422,6 @@ const Sidebar = ({
         </div>
       </section>
 
-      <section className="panel-section hint">
-        <h2>Hints</h2>
-        <ul>
-          <li>Click a waypoint to edit.</li>
-          <li>Use Move/Rotate to set position and heading.</li>
-          <li>Point cloud is streamed with a fixed memory budget.</li>
-        </ul>
-      </section>
     </aside>
   )
 }

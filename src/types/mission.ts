@@ -4,6 +4,7 @@ export type WaypointData = {
   id: string
   position: [number, number, number]
   rotation: [number, number, number]
+  takePhoto?: boolean
 }
 
 export type PointCloudStats = {
@@ -24,4 +25,25 @@ export type LasHeaderInfo = {
   recordLength: number
   scale: [number, number, number]
   offset: [number, number, number]
+}
+
+export type TrajectoryWaypoint = {
+  x: number
+  y: number
+  z: number
+  yaw: number
+  takePhoto: boolean
+}
+
+export type TrajectoryFile = {
+  name: string
+  createdAt?: string
+  waypoints: TrajectoryWaypoint[]
+}
+
+export type TrajectoryMeta = {
+  id: string
+  label: string
+  source: 'built-in' | 'local'
+  url?: string
 }

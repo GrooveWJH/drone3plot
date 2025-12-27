@@ -1,12 +1,19 @@
 import { Canvas } from '@react-three/fiber'
 import { GizmoHelper, GizmoViewport, Line, OrbitControls } from '@react-three/drei'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PointCloudLayer from './PointCloudLayer'
 import WaypointMarker from './WaypointMarker'
 import Sidebar from './Sidebar'
 import { loadLasPointCloud } from '../lib/pointCloudLoader'
-import type { PointCloudStats, TransformMode, WaypointData } from '../types/mission'
+import type {
+  PointCloudStats,
+  TrajectoryFile,
+  TrajectoryMeta,
+  TransformMode,
+  WaypointData,
+} from '../types/mission'
 import { UI_CONFIG } from '../config/ui'
+import { TRAJECTORY_SOURCES } from '../config/trajectories'
 
 const createId = () =>
   globalThis.crypto?.randomUUID?.() ?? `wp-${Math.random().toString(36).slice(2, 10)}`
@@ -15,6 +22,7 @@ const createWaypoint = (position: [number, number, number]): WaypointData => ({
   id: createId(),
   position,
   rotation: [0, 0, 0],
+  takePhoto: false,
 })
 
 const offsetWaypoint = (position: [number, number, number]) => [
@@ -42,6 +50,68 @@ const MissionPlanner = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const [trajectoryId, setTrajectoryId] = useState<string>(TRAJECTORY_SOURCES[0]?.id ?? 'default')
+  const [trajectoryName, setTrajectoryName] = useState<string>('新轨迹')
+  const [trajectoryOptions, setTrajectoryOptions] = useState<TrajectoryMeta[]>([])
+
+  const degToRad = (degrees: number) => (degrees * Math.PI) / 180
+  const radToDeg = (radians: number) => (radians * 180) / Math.PI
+  const normalizeDegrees = (value: number) => ((value % 360) + 360) % 360
+
+  const hydrateWaypoints = (trajectory: TrajectoryFile) => {
+    setTrajectoryName(trajectory.name)
+    setWaypoints(
+      trajectory.waypoints.map((waypoint) => ({
+        id: createId(),
+        position: [waypoint.x, waypoint.y, waypoint.z],
+        rotation: [0, degToRad(normalizeDegrees(waypoint.yaw)), 0],
+        takePhoto: waypoint.takePhoto,
+      }))
+    )
+  }
+
+  const loadTrajectory = useCallback(async (sourceId: string) => {
+    const source = trajectoryOptions.find((item) => item.id === sourceId)
+    if (!source) return
+    setTrajectoryId(sourceId)
+    if (source.source === 'local') {
+      const cached = localStorage.getItem(`trajectory:${sourceId}`)
+      if (cached) {
+        const parsed = JSON.parse(cached) as TrajectoryFile
+        hydrateWaypoints(parsed)
+      }
+      return
+    }
+
+    if (source.url) {
+      const response = await fetch(source.url)
+      if (!response.ok) return
+      const data = (await response.json()) as TrajectoryFile
+      hydrateWaypoints(data)
+    }
+  }, [trajectoryOptions])
+
+  const refreshTrajectoryOptions = useCallback(() => {
+    const localRaw = localStorage.getItem('trajectory:list')
+    const localList: TrajectoryMeta[] = localRaw ? JSON.parse(localRaw) : []
+    const builtIns = TRAJECTORY_SOURCES.map((item) => ({
+      id: item.id,
+      label: item.label,
+      source: 'built-in' as const,
+      url: item.url,
+    }))
+    setTrajectoryOptions([...builtIns, ...localList])
+  }, [])
+
+  useEffect(() => {
+    refreshTrajectoryOptions()
+  }, [refreshTrajectoryOptions])
+
+  useEffect(() => {
+    if (trajectoryOptions.length > 0) {
+      void loadTrajectory(trajectoryId)
+    }
+  }, [loadTrajectory, trajectoryId, trajectoryOptions.length])
 
   const handleAddWaypoint = () => {
     setWaypoints((prev) => {
@@ -54,11 +124,70 @@ const MissionPlanner = () => {
   const handleUpdateWaypoint = (
     id: string,
     position: [number, number, number],
-    rotation: [number, number, number]
+    rotation: [number, number, number],
+    takePhoto?: boolean
   ) => {
     setWaypoints((prev) =>
-      prev.map((waypoint) => (waypoint.id === id ? { ...waypoint, position, rotation } : waypoint))
+      prev.map((waypoint) =>
+        waypoint.id === id
+          ? {
+              ...waypoint,
+              position,
+              rotation,
+              takePhoto: takePhoto ?? waypoint.takePhoto,
+            }
+          : waypoint
+      )
     )
+  }
+
+  const handleTogglePhoto = (id: string, value: boolean) => {
+    setWaypoints((prev) =>
+      prev.map((waypoint) => (waypoint.id === id ? { ...waypoint, takePhoto: value } : waypoint))
+    )
+  }
+
+  const exportTrajectory = () => {
+    if (!trajectoryId) return
+    const payload: TrajectoryFile = {
+      name: trajectoryName,
+      createdAt: new Date().toISOString(),
+      waypoints: waypoints.map((waypoint) => ({
+        x: waypoint.position[0],
+        y: waypoint.position[1],
+        z: waypoint.position[2],
+        yaw: normalizeDegrees(radToDeg(waypoint.rotation[1])),
+        takePhoto: Boolean(waypoint.takePhoto),
+      })),
+    }
+    localStorage.setItem(`trajectory:${trajectoryId}`, JSON.stringify(payload))
+    const storedList: TrajectoryMeta[] = JSON.parse(
+      localStorage.getItem('trajectory:list') ?? '[]'
+    )
+    const exists = storedList.some((item) => item.id === trajectoryId)
+    if (!exists) {
+      storedList.push({ id: trajectoryId, label: trajectoryName, source: 'local' })
+      localStorage.setItem('trajectory:list', JSON.stringify(storedList))
+      refreshTrajectoryOptions()
+    }
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `${trajectoryName || trajectoryId}.json`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const createNewTrajectory = () => {
+    const existing = trajectoryOptions.filter((item) => item.source === 'local').length
+    const nextIndex = existing + 1
+    const newId = `local-${Date.now()}`
+    const newName = `新轨迹${nextIndex}`
+    setTrajectoryId(newId)
+    setTrajectoryName(newName)
+    setWaypoints([])
   }
 
   const handleDeleteWaypoint = (id: string) => {
@@ -160,6 +289,14 @@ const MissionPlanner = () => {
         onDeleteWaypoint={handleDeleteWaypoint}
         onReorderWaypoint={handleReorderWaypoint}
         onUpdateWaypoint={handleUpdateWaypoint}
+        onTogglePhoto={handleTogglePhoto}
+        trajectoryName={trajectoryName}
+        trajectoryId={trajectoryId}
+        trajectoryOptions={trajectoryOptions}
+        onSelectTrajectory={loadTrajectory}
+        onExportTrajectory={exportTrajectory}
+        onCreateTrajectory={createNewTrajectory}
+        onRenameTrajectory={setTrajectoryName}
         cloudRotation={cloudRotation}
         onRotateCloud={(axis, delta) => {
           setCloudRotation((prev) => {

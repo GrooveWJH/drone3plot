@@ -78,7 +78,9 @@ const WaypointMarker = ({
       >
         <mesh>
           <sphereGeometry args={[UI_CONFIG.waypoint.sphereRadius, 18, 18]} />
-          <meshStandardMaterial color={selected ? '#f97316' : '#fbbf24'} />
+          <meshStandardMaterial
+            color={waypoint.takePhoto ? '#22c55e' : selected ? '#f97316' : '#fbbf24'}
+          />
         </mesh>
         <mesh position={[0, 0, UI_CONFIG.waypoint.coneOffsetZ]} rotation={[Math.PI / 2, 0, 0]}>
           <coneGeometry args={[UI_CONFIG.waypoint.coneRadius, UI_CONFIG.waypoint.coneHeight, 10]} />
