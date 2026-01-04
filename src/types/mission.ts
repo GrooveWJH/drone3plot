@@ -1,4 +1,4 @@
-export type TransformMode = 'translate'
+export type TransformMode = 'translate' | 'rotate'
 
 export type WaypointData = {
   id: string
