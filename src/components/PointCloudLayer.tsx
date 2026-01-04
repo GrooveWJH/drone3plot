@@ -7,6 +7,7 @@ export type PointCloudLayerProps = {
   color?: string
   radius?: number
   rotation?: [number, number, number]
+  position?: [number, number, number]
   sizeAttenuation?: boolean
 }
 
@@ -16,6 +17,7 @@ const PointCloudLayer = ({
   color = '#8fa3a8',
   radius = 0.12,
   rotation = [0, 0, 0],
+  position = [0, 0, 0],
   sizeAttenuation = true,
 }: PointCloudLayerProps) => {
   const geometry = useMemo(() => {
@@ -33,7 +35,7 @@ const PointCloudLayer = ({
   useEffect(() => () => geometry.dispose(), [geometry])
 
   return (
-    <group rotation={rotation}>
+    <group rotation={rotation} position={position}>
       <points geometry={geometry}>
         <pointsMaterial
           size={radius}

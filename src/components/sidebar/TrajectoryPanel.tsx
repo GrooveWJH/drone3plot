@@ -1,0 +1,72 @@
+import type { TrajectoryMeta } from '../../types/mission'
+
+export type TrajectoryPanelProps = {
+  trajectoryId: string
+  trajectoryName: string
+  trajectoryOptions: TrajectoryMeta[]
+  onSelectTrajectory: (id: string) => void
+  onSaveTrajectory: () => void
+  onExportTrajectoryFile: () => void
+  onCreateTrajectory: () => void
+  onDeleteTrajectory: () => void
+  onRenameTrajectory: (value: string) => void
+}
+
+const TrajectoryPanel = ({
+  trajectoryId,
+  trajectoryName,
+  trajectoryOptions,
+  onSelectTrajectory,
+  onSaveTrajectory,
+  onExportTrajectoryFile,
+  onCreateTrajectory,
+  onDeleteTrajectory,
+  onRenameTrajectory,
+}: TrajectoryPanelProps) => (
+  <section className="dock-card">
+    <div className="dock-card-head">
+      <h2>航线</h2>
+      <span className="chip muted">规划</span>
+    </div>
+    <div className="field">
+      <label htmlFor="trajectory-select">选择航线</label>
+      <select
+        id="trajectory-select"
+        value={trajectoryId}
+        onChange={(event) => onSelectTrajectory(event.target.value)}
+      >
+        {trajectoryOptions.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div className="field">
+      <label htmlFor="trajectory-name">航线名称</label>
+      <input
+        id="trajectory-name"
+        type="text"
+        value={trajectoryName}
+        onChange={(event) => onRenameTrajectory(event.target.value)}
+      />
+    </div>
+    <div className="button-row">
+      <button className="ghost" onClick={onCreateTrajectory}>
+        新建
+      </button>
+      <button className="primary" onClick={onSaveTrajectory}>
+        保存
+      </button>
+      <button className="ghost" onClick={onExportTrajectoryFile}>
+        导出
+      </button>
+      <button className="ghost danger" onClick={onDeleteTrajectory}>
+        删除
+      </button>
+    </div>
+    <p className="field-help">保存后会下载 JSON 文件，请放入 trajectories 目录。</p>
+  </section>
+)
+
+export default TrajectoryPanel

@@ -58,7 +58,7 @@ const WaypointMarker = ({
           if (!obj) return
           if (mode === 'rotate') {
             obj.rotation.x = 0
-            obj.rotation.z = 0
+            obj.rotation.y = 0
           }
           onUpdate(waypoint.id, [obj.position.x, obj.position.y, obj.position.z], [
             obj.rotation.x,
@@ -73,20 +73,28 @@ const WaypointMarker = ({
         rotation={waypoint.rotation}
         onPointerDown={(event) => {
           event.stopPropagation()
+        }}
+        onClick={(event) => {
+          event.stopPropagation()
           onSelect()
         }}
       >
         <mesh>
           <sphereGeometry args={[UI_CONFIG.waypoint.sphereRadius, 18, 18]} />
           <meshStandardMaterial
-            color={waypoint.takePhoto ? '#22c55e' : selected ? '#f97316' : '#fbbf24'}
+            color={waypoint.takePhoto ? '#ff2d55' : selected ? '#d66a3c' : '#2f343a'}
+            emissive={waypoint.takePhoto ? '#ff2d55' : '#000000'}
+            emissiveIntensity={waypoint.takePhoto ? 0.8 : 0}
           />
         </mesh>
-        <mesh position={[0, 0, UI_CONFIG.waypoint.coneOffsetZ]} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh
+          position={[UI_CONFIG.waypoint.coneOffsetX, 0, 0]}
+          rotation={[0, 0, -Math.PI / 2]}
+        >
           <coneGeometry args={[UI_CONFIG.waypoint.coneRadius, UI_CONFIG.waypoint.coneHeight, 10]} />
-          <meshStandardMaterial color="#fde68a" />
+          <meshStandardMaterial color="#53b9ff" emissive="#1f6fff" emissiveIntensity={0.35} />
         </mesh>
-        <Html position={[0, UI_CONFIG.waypoint.labelOffsetY, 0]} center>
+        <Html position={[0, 0, UI_CONFIG.waypoint.labelOffsetZ]} center>
           <div className="waypoint-label">#{index + 1}</div>
         </Html>
       </group>

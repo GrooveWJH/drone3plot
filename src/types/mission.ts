@@ -38,6 +38,11 @@ export type TrajectoryWaypoint = {
 export type TrajectoryFile = {
   name: string
   createdAt?: string
+  cloudTransform?: {
+    fileName: string
+    rotation: [number, number, number]
+    offset: [number, number, number]
+  }
   waypoints: TrajectoryWaypoint[]
 }
 
