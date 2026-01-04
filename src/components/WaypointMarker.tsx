@@ -52,7 +52,8 @@ const WaypointMarker = ({
         showX={selected}
         showY={selected}
         showZ={selected}
-        onDraggingChanged={(event) => onTransforming(event.value)}
+        onPointerDown={() => onTransforming(true)}
+        onPointerUp={() => onTransforming(false)}
         onObjectChange={() => {
           const obj = groupRef.current
           if (!obj) return
@@ -82,7 +83,7 @@ const WaypointMarker = ({
         <mesh>
           <sphereGeometry args={[UI_CONFIG.waypoint.sphereRadius, 18, 18]} />
           <meshStandardMaterial
-            color={waypoint.takePhoto ? '#ff2d55' : selected ? '#d66a3c' : '#2f343a'}
+            color={waypoint.takePhoto ? '#ff2d55' : selected ? '#d66a3c' : '#335591'}
             emissive={waypoint.takePhoto ? '#ff2d55' : '#000000'}
             emissiveIntensity={waypoint.takePhoto ? 0.8 : 0}
           />
@@ -92,7 +93,11 @@ const WaypointMarker = ({
           rotation={[0, 0, -Math.PI / 2]}
         >
           <coneGeometry args={[UI_CONFIG.waypoint.coneRadius, UI_CONFIG.waypoint.coneHeight, 10]} />
-          <meshStandardMaterial color="#53b9ff" emissive="#1f6fff" emissiveIntensity={0.35} />
+          <meshStandardMaterial
+            color={waypoint.takePhoto ? '#53b9ff' : '#335591'}
+            emissive={waypoint.takePhoto ? '#1f6fff' : '#0f1c33'}
+            emissiveIntensity={waypoint.takePhoto ? 0.35 : 0.2}
+          />
         </mesh>
         <Html position={[0, 0, UI_CONFIG.waypoint.labelOffsetZ]} center>
           <div className="waypoint-label">#{index + 1}</div>
