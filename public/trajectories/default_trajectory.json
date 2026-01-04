@@ -1,5 +1,5 @@
 {
-  "name": "Default Trajectory",
+  "name": "默认航线",
   "createdAt": "2025-01-01T00:00:00Z",
   "waypoints": [
     { "x": 0, "y": 0, "z": 0, "yaw": 0, "takePhoto": false },

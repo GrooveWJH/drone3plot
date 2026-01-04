@@ -63,14 +63,14 @@ const CloudTransformPanel = ({
     <section className="dock-card">
       <div className="dock-card-head">
         <h2>点云变换</h2>
-        <span className="chip muted">建模式操作</span>
+        <span className="chip muted">建模操作</span>
       </div>
       <div className="transform-toolbar">
         <button
           className={`ghost ${cloudTransformEnabled ? 'active' : ''}`}
           onClick={onToggleCloudTransform}
         >
-          {cloudTransformEnabled ? '关闭 3D 操作' : '开启 3D 操作'}
+          {cloudTransformEnabled ? '关闭三维操作' : '开启三维操作'}
         </button>
         <div className="mode-toggle">
           <button

@@ -3,15 +3,16 @@ import { GizmoHelper, GizmoViewport, Line, OrbitControls, TransformControls } fr
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
+import logoYunDrone from '../assets/logo_yundrone.svg'
 import PointCloudLayer from './PointCloudLayer'
 import WaypointMarker from './WaypointMarker'
 import Sidebar from './Sidebar'
 import { loadPointCloud } from '../lib/pointCloudLoader'
 import { cachePointCloudFile, getCachedPointCloudFile } from '../lib/pointCloudCache'
 import {
-  createNewTrajectoryName,
   deleteLocalTrajectory,
   findFallbackTrajectoryId,
+  findLocalTrajectoryIdByLabel,
   getLocalTrajectory,
   getTrajectoryOptions,
   saveLocalTrajectory,
@@ -296,7 +297,10 @@ const MissionPlanner = () => {
   const saveTrajectory = () => {
     if (!trajectoryId) return
     const payload = buildTrajectoryPayload()
-    const result = saveLocalTrajectory(trajectoryId, payload, trajectoryName, TRAJECTORY_SOURCES)
+    const existingId = findLocalTrajectoryIdByLabel(trajectoryName)
+    const targetId = existingId ?? `local-${Date.now()}`
+    const result = saveLocalTrajectory(targetId, payload, trajectoryName)
+    setTrajectoryId(targetId)
     setTrajectoryName(result.label)
     refreshTrajectoryOptions()
   }
@@ -311,14 +315,6 @@ const MissionPlanner = () => {
     anchor.download = `${trajectoryName || trajectoryId}.json`
     anchor.click()
     URL.revokeObjectURL(url)
-  }
-
-  const createNewTrajectory = () => {
-    const newId = `local-${Date.now()}`
-    const newName = createNewTrajectoryName('DefaultTrajectory', TRAJECTORY_SOURCES)
-    setTrajectoryId(newId)
-    setTrajectoryName(newName)
-    setWaypoints([])
   }
 
   const deleteTrajectory = useCallback(() => {
@@ -446,24 +442,16 @@ const MissionPlanner = () => {
     <div className="app-shell">
       <header className="app-topbar">
         <div className="brand">
-          <div className="brand-mark">D3</div>
-          <div>
-            <p className="brand-title">Drone3Plot</p>
-            <span className="brand-sub">Mission planning cockpit</span>
-          </div>
+          <img className="brand-logo" src={logoYunDrone} alt="标识" />
         </div>
         <div className="topbar-meta">
           <div className="meta-card">
-            <span>Trajectory</span>
+            <span>航线</span>
             <strong>{trajectoryName}</strong>
           </div>
           <div className="meta-card">
-            <span>Point Cloud</span>
-            <strong>{stats ? `${formatNumber(stats.loadedPoints)} pts` : 'No data'}</strong>
-          </div>
-          <div className="meta-card">
-            <span>Budget</span>
-            <strong>{UI_CONFIG.pointCloud.budgetMB}MB</strong>
+            <span>点云</span>
+            <strong>{stats ? `${formatNumber(stats.loadedPoints)} 点` : '未加载'}</strong>
           </div>
         </div>
       </header>
@@ -473,6 +461,7 @@ const MissionPlanner = () => {
           isLoading={isLoading}
           error={error}
           onFileSelect={handleFileSelect}
+          pointCloudFileName={cloudFileName}
           onAddWaypoint={handleAddWaypoint}
           waypoints={waypoints}
           selectedId={selectedId}
@@ -487,7 +476,6 @@ const MissionPlanner = () => {
           onSelectTrajectory={handleSelectTrajectory}
           onSaveTrajectory={saveTrajectory}
           onExportTrajectoryFile={exportTrajectoryFile}
-          onCreateTrajectory={createNewTrajectory}
           onDeleteTrajectory={deleteTrajectory}
           onRenameTrajectory={setTrajectoryName}
           hasPointCloud={Boolean(pointCloud)}
@@ -587,7 +575,8 @@ const MissionPlanner = () => {
               <TransformControls
                 mode={cloudTransformMode}
                 object={cloudGroupRef}
-                onDraggingChanged={(event) => setIsCloudTransforming(event.value)}
+                onPointerDown={() => setIsCloudTransforming(true)}
+                onPointerUp={() => setIsCloudTransforming(false)}
                 onObjectChange={() => {
                   const group = cloudGroupRef.current
                   if (!group) return

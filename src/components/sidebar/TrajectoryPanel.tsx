@@ -7,7 +7,6 @@ export type TrajectoryPanelProps = {
   onSelectTrajectory: (id: string) => void
   onSaveTrajectory: () => void
   onExportTrajectoryFile: () => void
-  onCreateTrajectory: () => void
   onDeleteTrajectory: () => void
   onRenameTrajectory: (value: string) => void
 }
@@ -19,7 +18,6 @@ const TrajectoryPanel = ({
   onSelectTrajectory,
   onSaveTrajectory,
   onExportTrajectoryFile,
-  onCreateTrajectory,
   onDeleteTrajectory,
   onRenameTrajectory,
 }: TrajectoryPanelProps) => (
@@ -52,9 +50,6 @@ const TrajectoryPanel = ({
       />
     </div>
     <div className="button-row">
-      <button className="ghost" onClick={onCreateTrajectory}>
-        新建
-      </button>
       <button className="primary" onClick={onSaveTrajectory}>
         保存
       </button>

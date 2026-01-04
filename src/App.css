@@ -23,30 +23,10 @@
   gap: 1rem;
 }
 
-.brand-mark {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: linear-gradient(140deg, #e18d5c, #c94f2f);
-  color: #fff7ed;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.brand-title {
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 700;
-}
-
-.brand-sub {
+.brand-logo {
+  height: 44px;
+  width: auto;
   display: block;
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
 }
 
 .topbar-meta {
@@ -216,7 +196,7 @@
 }
 
 .file-input {
-  cursor: pointer;
+  display: none;
 }
 
 .file-input::file-selector-button {
@@ -228,6 +208,11 @@
   color: var(--ink);
   font-family: inherit;
   cursor: pointer;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--ink-muted);
 }
 
 .file-input::-webkit-file-upload-button {

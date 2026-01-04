@@ -235,7 +235,7 @@ const WaypointPanel = ({
                   />
                 </label>
                 <label className="field-stack">
-                  <span>yaw</span>
+                  <span>航向</span>
                   <input
                     type="text"
                     inputMode="decimal"

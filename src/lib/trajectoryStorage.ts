@@ -41,6 +41,7 @@ const writeLocalList = (items: TrajectoryMeta[]) => {
 export const getTrajectoryOptions = (builtIns: BuiltInTrajectory[]): TrajectoryMeta[] => {
   const localList = readLocalList()
   const builtIds = new Set(builtIns.map((item) => item.id))
+  const localLabels = new Set(localList.map((item) => normalizeLabel(item.label)))
   const cleanedLocal = localList.filter((item) => !builtIds.has(item.id))
   const builtMeta: TrajectoryMeta[] = builtIns.map((item) => ({
     id: item.id,
@@ -48,7 +49,10 @@ export const getTrajectoryOptions = (builtIns: BuiltInTrajectory[]): TrajectoryM
     source: 'built-in',
     url: item.url,
   }))
-  return [...builtMeta, ...cleanedLocal]
+  const filteredBuilt = builtMeta.filter(
+    (item) => !localLabels.has(normalizeLabel(item.label))
+  )
+  return [...filteredBuilt, ...cleanedLocal]
 }
 
 export const getLocalTrajectory = (id: string): TrajectoryFile | null => {
@@ -61,45 +65,27 @@ export const getLocalTrajectory = (id: string): TrajectoryFile | null => {
   }
 }
 
-const uniqueLabel = (preferred: string, existingLabels: string[]) => {
-  const normalized = new Set(existingLabels.map(normalizeLabel))
-  if (!normalized.has(normalizeLabel(preferred))) return preferred
-  const base = preferred.replace(/\s+/g, '') || 'Trajectory'
-  let index = 1
-  while (normalized.has(normalizeLabel(`${base}${index}`))) {
-    index += 1
-  }
-  return `${base}${index}`
-}
-
-export const createNewTrajectoryName = (
-  base: string,
-  builtIns: BuiltInTrajectory[]
-): string => {
-  const existingLabels = [
-    ...builtIns.map((item) => item.label),
-    ...readLocalList().map((item) => item.label),
-  ]
-  return uniqueLabel(base, existingLabels)
+export const findLocalTrajectoryIdByLabel = (label: string): string | null => {
+  const normalized = normalizeLabel(label)
+  const localList = readLocalList()
+  const match = localList.find((item) => normalizeLabel(item.label) === normalized)
+  return match?.id ?? null
 }
 
 export const saveLocalTrajectory = (
   id: string,
   trajectory: TrajectoryFile,
-  preferredLabel: string,
-  builtIns: BuiltInTrajectory[]
+  label: string
 ) => {
   const localList = readLocalList()
-  const existingLabels = [
-    ...builtIns.map((item) => item.label),
-    ...localList.filter((item) => item.id !== id).map((item) => item.label),
-  ]
-  const finalLabel = uniqueLabel(preferredLabel, existingLabels)
-  const payload: TrajectoryFile = { ...trajectory, name: finalLabel }
+  const payload: TrajectoryFile = { ...trajectory, name: label }
   localStorage.setItem(itemKey(id), JSON.stringify(payload))
-  const nextList = [...localList.filter((item) => item.id !== id), { id, label: finalLabel, source: 'local' as const }]
+  const nextList = [
+    ...localList.filter((item) => item.id !== id),
+    { id, label, source: 'local' as const },
+  ]
   writeLocalList(nextList)
-  return { label: finalLabel }
+  return { label }
 }
 
 export const deleteLocalTrajectory = (id: string) => {

@@ -9,6 +9,7 @@ export type SidebarProps = {
   isLoading: boolean
   error: string | null
   onFileSelect: (file: File) => void
+  pointCloudFileName: string | null
   onAddWaypoint: () => void
   waypoints: WaypointData[]
   selectedId: string | null
@@ -28,7 +29,6 @@ export type SidebarProps = {
   onSelectTrajectory: (id: string) => void
   onSaveTrajectory: () => void
   onExportTrajectoryFile: () => void
-  onCreateTrajectory: () => void
   onDeleteTrajectory: () => void
   onRenameTrajectory: (value: string) => void
   hasPointCloud: boolean
@@ -47,6 +47,7 @@ const Sidebar = ({
   isLoading,
   error,
   onFileSelect,
+  pointCloudFileName,
   onAddWaypoint,
   waypoints,
   selectedId,
@@ -61,7 +62,6 @@ const Sidebar = ({
   onSelectTrajectory,
   onSaveTrajectory,
   onExportTrajectoryFile,
-  onCreateTrajectory,
   onDeleteTrajectory,
   onRenameTrajectory,
   hasPointCloud,
@@ -76,8 +76,8 @@ const Sidebar = ({
 }: SidebarProps) => (
   <aside className="control-dock">
     <div className="dock-hero">
-      <h1>Mission Control</h1>
-      <p>Draft, iterate, and export precise trajectories.</p>
+      <h1>任务控制</h1>
+      <p>规划、调整并导出航线。</p>
     </div>
 
     <PointCloudPanel
@@ -85,18 +85,7 @@ const Sidebar = ({
       isLoading={isLoading}
       error={error}
       onFileSelect={onFileSelect}
-    />
-
-    <TrajectoryPanel
-      trajectoryId={trajectoryId}
-      trajectoryName={trajectoryName}
-      trajectoryOptions={trajectoryOptions}
-      onSelectTrajectory={onSelectTrajectory}
-      onSaveTrajectory={onSaveTrajectory}
-      onExportTrajectoryFile={onExportTrajectoryFile}
-      onCreateTrajectory={onCreateTrajectory}
-      onDeleteTrajectory={onDeleteTrajectory}
-      onRenameTrajectory={onRenameTrajectory}
+      fileName={pointCloudFileName}
     />
 
     {hasPointCloud && (
@@ -111,6 +100,17 @@ const Sidebar = ({
         onTranslateCloud={onTranslateCloud}
       />
     )}
+
+    <TrajectoryPanel
+      trajectoryId={trajectoryId}
+      trajectoryName={trajectoryName}
+      trajectoryOptions={trajectoryOptions}
+      onSelectTrajectory={onSelectTrajectory}
+      onSaveTrajectory={onSaveTrajectory}
+      onExportTrajectoryFile={onExportTrajectoryFile}
+      onDeleteTrajectory={onDeleteTrajectory}
+      onRenameTrajectory={onRenameTrajectory}
+    />
 
     <WaypointPanel
       onAddWaypoint={onAddWaypoint}
