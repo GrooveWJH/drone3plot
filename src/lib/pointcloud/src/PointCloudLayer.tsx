@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as THREE from 'three'
-import { UI_CONFIG } from '../config/ui'
+import { UI_CONFIG } from '../../../config/ui'
 
 let lastGeometryLogAt = 0
 

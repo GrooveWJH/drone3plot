@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { loadPointCloud } from '../../../lib/pointCloudLoader'
+import { loadPointCloud } from './pointCloudLoader'
 import type { PointCloudStats } from '../../../types/mission'
 import { UI_CONFIG } from '../../../config/ui'
 
@@ -126,7 +126,7 @@ export const usePointCloudLoader = ({
 
       try {
         if (typeof Worker !== 'undefined') {
-          const worker = new Worker(new URL('../../../workers/pointCloudWorker.ts', import.meta.url), {
+          const worker = new Worker(new URL('./pointCloudWorker.ts', import.meta.url), {
             type: 'module',
           })
           workerRef.current = worker

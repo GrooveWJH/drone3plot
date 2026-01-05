@@ -1,4 +1,4 @@
-import { loadPointCloud } from '../lib/pointCloudLoader'
+import { loadPointCloud } from './pointCloudLoader'
 
 type WorkerScope = typeof self & {
   postMessage: (message: unknown, transfer?: Transferable[]) => void

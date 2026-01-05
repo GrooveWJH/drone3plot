@@ -9,7 +9,7 @@ export const UI_CONFIG = {
     accentGlow: '#f4b156',
   },
   pointCloud: {
-    radius: 0.75,
+    radius: 1.0,
     budgetMB: 100,
     fixedPixelSize: true,
     boundsRadius: 1000,
