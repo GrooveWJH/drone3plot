@@ -20,13 +20,13 @@ def register_socketio_events(socketio: SocketIO, registry: ServiceRegistry) -> N
             namespace=TELEMETRY_NAMESPACE,
         ))
 
-    if registry.pose:
-        def _pose_loop():
-            while True:
+    def _pose_loop():
+        while True:
+            if registry.pose:
                 socketio.emit("pose", registry.pose.latest(), namespace=POSE_NAMESPACE)
-                socketio.sleep(registry.config.get("POSE_SOCKET_RATE", 0.2))
+            socketio.sleep(registry.config.get("POSE_SOCKET_RATE", 0.2))
 
-        socketio.start_background_task(_pose_loop)
+    socketio.start_background_task(_pose_loop)
 
     @socketio.on("connect", namespace=TELEMETRY_NAMESPACE)
     def _handle_connect():

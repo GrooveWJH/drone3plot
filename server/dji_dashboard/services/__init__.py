@@ -61,6 +61,7 @@ class ServiceRegistry:
                 self.config.get("SLAM_POSE_TOPIC"),
                 self.config.get("SLAM_YAW_TOPIC"),
                 self.config.get("SLAM_STATUS_TOPIC"),
+                self.config.get("SLAM_FREQUENCY_TOPIC"),
             )
             self.drc = DrcControlService(
                 self.mqtt_client,

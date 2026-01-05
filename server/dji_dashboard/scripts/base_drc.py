@@ -21,7 +21,7 @@ from pydjimqtt import setup_drc_connection, stop_heartbeat  # noqa: E402
 
 
 MQTT_CONFIG = {
-    "host": "192.168.20.186",
+    "host": "192.168.10.28",
     "port": 1883,
     "username": "admin",
     "password": "yundrone123",

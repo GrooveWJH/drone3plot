@@ -17,11 +17,13 @@ class PoseService:
         pose_topic: str | None,
         yaw_topic: str | None,
         status_topic: str | None,
+        frequency_topic: str | None,
     ) -> None:
         self.client = client
         self.pose_topic = (pose_topic or "").strip()
         self.yaw_topic = (yaw_topic or "").strip()
         self.status_topic = (status_topic or "").strip()
+        self.frequency_topic = (frequency_topic or "").strip()
         self._lock = threading.Lock()
         self._pose: Dict[str, Optional[float]] = {
             "x": None,
@@ -29,9 +31,14 @@ class PoseService:
             "z": None,
             "yaw": None,
         }
+        self._frequency: Dict[str, Optional[float]] = {
+            "rostopic": None,
+            "mqtt": None,
+            "timestamp": None,
+        }
         self._status: Optional[str] = None
         self._original_on_message = None
-        if self.pose_topic or self.yaw_topic or self.status_topic:
+        if self.pose_topic or self.yaw_topic or self.status_topic or self.frequency_topic:
             self._attach_listener()
 
     def _attach_listener(self) -> None:
@@ -46,6 +53,8 @@ class PoseService:
                 self._handle_yaw(msg.payload)
             if self.status_topic and msg.topic == self.status_topic:
                 self._handle_status(msg.payload)
+            if self.frequency_topic and msg.topic == self.frequency_topic:
+                self._handle_frequency(msg.payload)
             if self._original_on_message:
                 self._original_on_message(client, userdata, msg)
 
@@ -56,6 +65,8 @@ class PoseService:
             self.client.client.subscribe(self.yaw_topic, qos=0)
         if self.status_topic:
             self.client.client.subscribe(self.status_topic, qos=0)
+        if self.frequency_topic:
+            self.client.client.subscribe(self.frequency_topic, qos=0)
 
     def _handle_pose(self, raw_payload: bytes) -> None:
         try:
@@ -93,10 +104,25 @@ class PoseService:
         with self._lock:
             self._status = str(status)
 
+    def _handle_frequency(self, raw_payload: bytes) -> None:
+        try:
+            payload = json.loads(raw_payload.decode())
+        except Exception:
+            return
+        data: Dict[str, Any] = payload.get("data", payload)
+        mqtt_rate = _to_float(data.get("mqtt"))
+        rostopic_rate = _to_float(data.get("rostopic"))
+        timestamp = _to_float(data.get("timestamp"))
+        with self._lock:
+            self._frequency["mqtt"] = mqtt_rate
+            self._frequency["rostopic"] = rostopic_rate
+            self._frequency["timestamp"] = timestamp
+
     def latest(self) -> Dict[str, Optional[float] | Optional[str]]:
         with self._lock:
             payload = dict(self._pose)
             payload["status"] = self._status
+            payload["frequency"] = dict(self._frequency)
             return payload
 
 

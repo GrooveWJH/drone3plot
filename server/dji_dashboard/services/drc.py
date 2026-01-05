@@ -55,6 +55,7 @@ class DrcControlService:
                 except Exception:
                     is_online = True
             if not is_online and self._state != self.STATE_WAITING:
+                print("DrcControlService.status(): MQTT client offline, resetting state.")
                 self._state = self.STATE_DISCONNECTED
                 self._last_error = None
                 if self._heartbeat_thread:

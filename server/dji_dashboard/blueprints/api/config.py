@@ -40,6 +40,7 @@ def get_config_values():
 def update_config_values():
     payload = request.get_json(force=True) or {}
     updated: dict[str, Any] = {}
+    changed = False
     for env_key, (config_key, parser) in CONFIG_FIELDS.items():
         if env_key not in payload:
             continue
@@ -47,15 +48,19 @@ def update_config_values():
             value = parser(payload[env_key])
         except (TypeError, ValueError):
             return jsonify({"error": f"Invalid value for {env_key}."}), 400
-        current_app.config[config_key] = value
+        current_value = current_app.config.get(config_key)
+        if current_value != value:
+            changed = True
+            current_app.config[config_key] = value
         updated[config_key] = value
 
     registry: ServiceRegistry | None = current_app.extensions.get("services")
-    if registry and updated:
+    if registry and changed:
+        if registry.is_connected:
+            return jsonify({"error": "Cannot update config while connected."}), 409
         registry.reconfigure(current_app.config)
 
     return jsonify({
         "status": "ok",
         "config": _serialize_config(current_app.config),
     })
-

@@ -7,6 +7,7 @@ export function initPoseStrip() {
   const yawEl = document.querySelector('[data-pose-yaw]');
   const rhEl = document.querySelector('[data-relative-height]');
   let pollTimer = null;
+  let pollIntervalMs = 1000;
 
   if (!xEl || !yEl || !zEl || !yawEl || !rhEl) return;
 
@@ -23,6 +24,17 @@ export function initPoseStrip() {
     return value.toFixed(3);
   };
 
+  const setPollInterval = (hz) => {
+    const safeHz = Number.isFinite(hz) && hz > 0 ? hz : 1;
+    const nextInterval = Math.max(1, Math.round(1000 / safeHz));
+    if (nextInterval === pollIntervalMs) return;
+    pollIntervalMs = nextInterval;
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = setInterval(updateAll, pollIntervalMs);
+    }
+  };
+
   const updatePose = () => {
     getJSON('/api/pose')
       .then((payload) => {
@@ -30,12 +42,19 @@ export function initPoseStrip() {
         yEl.textContent = format(payload?.y);
         zEl.textContent = format(payload?.z);
         yawEl.textContent = format(payload?.yaw);
+        const mqttHz = Number(payload?.frequency?.mqtt);
+        if (Number.isFinite(mqttHz) && mqttHz > 0) {
+          setPollInterval(mqttHz);
+        } else {
+          setPollInterval(1);
+        }
       })
       .catch(() => {
         xEl.textContent = '--';
         yEl.textContent = '--';
         zEl.textContent = '--';
         yawEl.textContent = '--';
+        setPollInterval(1);
       });
   };
 
@@ -57,7 +76,7 @@ export function initPoseStrip() {
   const startPoll = () => {
     if (pollTimer) return;
     updateAll();
-    pollTimer = setInterval(updateAll, 1000);
+    pollTimer = setInterval(updateAll, pollIntervalMs);
   };
 
   const stopPoll = () => {
@@ -65,6 +84,7 @@ export function initPoseStrip() {
       clearInterval(pollTimer);
       pollTimer = null;
     }
+    pollIntervalMs = 1000;
     reset();
   };
 

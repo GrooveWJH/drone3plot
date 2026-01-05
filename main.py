@@ -1,3 +1,5 @@
+import argparse
+import logging
 import sys
 from pathlib import Path
 
@@ -11,13 +13,30 @@ from dji_dashboard.extensions import socketio  # type: ignore[import-not-found]
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Drone3Plot server")
+    parser.add_argument(
+        "--log-level",
+        default="info",
+        choices=["debug", "info", "warning", "error"],
+        help="Log verbosity for server output",
+    )
+    args = parser.parse_args()
+
+    log_level = args.log_level.lower()
+    logging.basicConfig(level=getattr(logging, log_level.upper(), logging.INFO))
+    if log_level != "debug":
+        logging.getLogger("werkzeug").setLevel(logging.ERROR)
+
     apply_dashboard_env()
     app = create_app()
+    if log_level != "debug":
+        app.logger.setLevel(logging.WARNING)
     socketio.run(
         app,
         host=SERVER_CONFIG.host,
         port=SERVER_CONFIG.port,
         debug=SERVER_CONFIG.debug,
+        log_output=log_level == "debug",
     )
 
 
