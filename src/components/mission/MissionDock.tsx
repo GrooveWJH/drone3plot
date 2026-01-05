@@ -76,7 +76,7 @@ const MissionDock = ({
             </span>
             </button>
           </div>
-        {isDashboardOpen && <iframe title="dashboard" src="/dashboard" />}
+        <iframe title="dashboard" src="/dashboard" />
       </div>
     </div>
     <div className={`media-drawer ${isMediaOpen ? 'is-open' : ''}`} aria-hidden={!isMediaOpen}>
@@ -89,7 +89,7 @@ const MissionDock = ({
             </span>
           </button>
         </div>
-        {isMediaOpen && <iframe title="media" src="/media" />}
+        <iframe title="media" src="/media" />
       </div>
     </div>
   </>

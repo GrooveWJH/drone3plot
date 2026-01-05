@@ -14,8 +14,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/live.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}" />
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-W70IqfdCwHt1AaRao7IhiHBpjz2uVH54camzato3trENcGukdxbYlR5jlt3F4K0p" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/hls.min.js') }}"></script>
     {% block head_scripts %}{% endblock %}
   </head>
   <body class="h-full">

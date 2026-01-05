@@ -14,6 +14,7 @@ export function initControlAuth() {
   let batteryTimer = null;
   let statusTimer = null;
   if (!requestButton || !modal || !confirmButton) return;
+  modal.inert = modal.getAttribute('aria-hidden') !== 'false';
   const defaultRequestLabel = requestButton.textContent;
   const setPill = (state, text) => {
     if (!statusPill || !statusPillText) return;
@@ -55,14 +56,27 @@ export function initControlAuth() {
     return Object.keys(payload).length > 0 ? payload : null;
   };
 
+  const setModalHidden = (hidden) => {
+    if (hidden) {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.inert = true;
+      if (modal.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
+    } else {
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.inert = false;
+    }
+  };
+
   const openModal = () => {
-    modal.classList.add('is-open');
-    modal.setAttribute('aria-hidden', 'false');
+    setModalHidden(false);
   };
 
   const closeModal = () => {
-    modal.classList.remove('is-open');
-    modal.setAttribute('aria-hidden', 'true');
+    setModalHidden(true);
   };
   const stopBatteryPoll = () => {
     if (batteryTimer) {
