@@ -1,0 +1,14 @@
+[project]
+name = "drone3plot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.1.2",
+    "flask-socketio>=5.6.0",
+    "pandas>=2.3.3",
+    "plotly>=6.5.0",
+    "pydantic>=2.12.5",
+    "typer>=0.21.0",
+]

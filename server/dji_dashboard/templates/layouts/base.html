@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN" class="h-full bg-slate-50 text-slate-900">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}DJI Cloud Dashboard{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/config.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/live.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}" />
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-W70IqfdCwHt1AaRao7IhiHBpjz2uVH54camzato3trENcGukdxbYlR5jlt3F4K0p" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    {% block head_scripts %}{% endblock %}
+  </head>
+  <body class="h-full">
+    <div class="orb orb-one"></div>
+    <div class="orb orb-two"></div>
+    <div class="min-h-full flex flex-col relative z-10">
+      <main class="flex-1 w-full">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/app.js') }}" type="module"></script>
+  </body>
+</html>

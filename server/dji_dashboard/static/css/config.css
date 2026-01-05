@@ -1,0 +1,67 @@
+.config-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.config-toggle {
+  border: 1px solid rgba(15,23,42,0.12);
+  background: #fff;
+  color: #0f172a;
+  border-radius: 999px;
+  padding: 0.4rem 1.2rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.config-toggle:hover {
+  box-shadow: 0 12px 25px rgba(15,23,42,0.12);
+  transform: translateY(-1px);
+}
+
+.config-form {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.config-form.is-open {
+  display: flex;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem 0.8rem;
+}
+
+.config-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.config-grid input,
+.config-grid select {
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,0.12);
+  padding: 0.45rem 0.6rem;
+  font-size: 0.8rem;
+  color: #0f172a;
+  background: #fff;
+  font-family: 'JetBrains Mono', 'Cascadia Mono', 'Menlo', 'Consolas', 'SFMono-Regular', 'Ubuntu Mono', 'Liberation Mono', 'Courier New', monospace;
+}

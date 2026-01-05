@@ -1,0 +1,3 @@
+[submodule "thirdparty/pydjimqtt"]
+	path = thirdparty/pydjimqtt
+	url = https://github.com/GrooveWJH/pydjimqtt

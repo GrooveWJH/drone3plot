@@ -1,0 +1,115 @@
+.card input[type='text'] {
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,0.12);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.85rem;
+  color: #0f172a;
+  background: #fff;
+  width: 100%;
+  font-family: 'JetBrains Mono', 'Cascadia Mono', 'Menlo', 'Consolas', 'SFMono-Regular', 'Ubuntu Mono', 'Liberation Mono', 'Courier New', monospace;
+}
+
+.live-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.live-quality {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.quality-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quality-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quality-pill input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.quality-pill:has(input:checked) {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.12);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
+}
+
+.live-stage {
+  display: none;
+  justify-content: center;
+  padding: 1.5rem 0;
+}
+
+.live-stage.is-active {
+  display: flex;
+}
+
+.live-video-wrapper {
+  height: min(60vh, 540px);
+  width: auto;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #0b0f1a;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
+  position: relative;
+}
+
+.live-video-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.live-video-header {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(15, 23, 42, 0.6);
+  color: #fff;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.live-label {
+  font-weight: 600;
+}
+
+.live-meta {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.control-card.is-locked {
+  opacity: 0.9;
+}

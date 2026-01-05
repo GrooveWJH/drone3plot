@@ -26,3 +26,13 @@ data/
 *.njsproj
 *.sln
 *.sw?
+
+# Python env/cache
+.python-version
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.env
+.env.*
