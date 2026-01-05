@@ -23,7 +23,10 @@ export type WaypointPanelProps = {
 
 const radToDeg = (radians: number) => (radians * 180) / Math.PI
 const degToRad = (degrees: number) => (degrees * Math.PI) / 180
-const normalizeDegrees = (value: number) => ((value % 360) + 360) % 360
+const normalizeDegrees = (value: number) => {
+  const wrapped = ((value % 360) + 360) % 360
+  return wrapped > 180 ? wrapped - 360 : wrapped
+}
 
 const commitNumber = (value: string, onCommit: (num: number) => void) => {
   const trimmed = value.trim()
@@ -90,7 +93,10 @@ const WaypointPanel = ({
     <section className="dock-card">
       <div className="dock-card-head">
         <h2>航点</h2>
-        <button className="primary" onClick={onAddWaypoint}>
+        <button className="primary with-icon" onClick={onAddWaypoint}>
+          <span className="material-symbols-outlined" aria-hidden="true">
+            add
+          </span>
           添加航点
         </button>
       </div>
@@ -113,20 +119,24 @@ const WaypointPanel = ({
               </button>
               <div className="waypoint-actions">
                 <button
-                  className="icon"
+                  className="icon with-icon"
                   onClick={() => onReorderWaypoint(waypoint.id, 'up')}
                   disabled={index === 0}
                   aria-label="上移"
                 >
-                  ↑
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    arrow_upward
+                  </span>
                 </button>
                 <button
-                  className="icon"
+                  className="icon with-icon"
                   onClick={() => onReorderWaypoint(waypoint.id, 'down')}
                   disabled={index === waypoints.length - 1}
                   aria-label="下移"
                 >
-                  ↓
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    arrow_downward
+                  </span>
                 </button>
               </div>
             </div>
@@ -284,13 +294,19 @@ const WaypointPanel = ({
                     onChange={(event) => onTogglePhoto(waypoint.id, event.target.checked)}
                   />
                   <span className="toggle-box" aria-hidden="true" />
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    photo_camera
+                  </span>
                   拍照
                 </label>
                 <button
-                  className="icon danger"
+                  className="icon danger with-icon"
                   onClick={() => onDeleteWaypoint(waypoint.id)}
                   aria-label="删除"
                 >
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    delete
+                  </span>
                   删除
                 </button>
               </div>

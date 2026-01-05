@@ -1,5 +1,5 @@
 import './App.css'
-import MissionPlanner from './components/MissionPlanner'
+import MissionPlanner from './components/mission/MissionPlanner'
 
 function App() {
   return (

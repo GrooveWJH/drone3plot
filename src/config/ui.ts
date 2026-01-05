@@ -12,6 +12,9 @@ export const UI_CONFIG = {
     radius: 0.75,
     budgetMB: 100,
     fixedPixelSize: true,
+    boundsRadius: 1000,
+    chunkSize: 200000,
+    chunkBatch: 2,
   },
   waypoint: {
     sphereRadius: 0.1,

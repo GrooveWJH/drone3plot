@@ -101,6 +101,15 @@ const estimateMaxPoints = (budgetMB: number, bytesPerPoint: number) => {
   return Math.max(1, Math.floor(bytes / bytesPerPoint))
 }
 
+const yieldToMainThread = () =>
+  new Promise<void>((resolve) => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve())
+      return
+    }
+    setTimeout(() => resolve(), 0)
+  })
+
 type PcdHeader = {
   pointCount: number
   data: string
@@ -257,6 +266,8 @@ const loadPcdPointCloud = async (file: File, options: LasLoadOptions): Promise<P
   const outputColors = new Float32Array(targetPoints * 3)
   let colorScale = 255
   let accepted = 0
+  let frameStart = performance.now()
+  let lastProgressAt = frameStart
 
   const readFieldMajor = (fieldIndex: number, pointIndex: number) => {
     let fieldOffset = 0
@@ -322,6 +333,15 @@ const loadPcdPointCloud = async (file: File, options: LasLoadOptions): Promise<P
   dataIsFieldMajor = pickLayout()
 
   for (let i = 0; i < totalPoints && accepted < targetPoints; i += sampleEvery) {
+    if (options.signal?.aborted) {
+      return {
+        points: new Float32Array(),
+        colors: null,
+        totalPoints,
+        sampleEvery,
+        acceptedPoints: 0,
+      }
+    }
     const base = dataIsFieldMajor ? 0 : i * stride
     const xOffset = dataIsFieldMajor ? readFieldMajor(indexX, i) : base + offsets[indexX]
     const yOffset = dataIsFieldMajor ? readFieldMajor(indexY, i) : base + offsets[indexY]
@@ -369,12 +389,21 @@ const loadPcdPointCloud = async (file: File, options: LasLoadOptions): Promise<P
     }
 
     accepted += 1
-    options.onProgress?.({
-      totalPoints,
-      processedPoints: i,
-      acceptedPoints: accepted,
-      sampleEvery,
-    })
+    const now = performance.now()
+    if (now - lastProgressAt > 80) {
+      options.onProgress?.({
+        totalPoints,
+        processedPoints: i,
+        acceptedPoints: accepted,
+        sampleEvery,
+      })
+      lastProgressAt = now
+    }
+
+    if (now - frameStart > 12) {
+      await yieldToMainThread()
+      frameStart = performance.now()
+    }
   }
 
   return {
@@ -407,6 +436,7 @@ const streamLasPositions = async (
   const pointsPerChunk = Math.max(1, Math.floor(chunkBytes / bytesPerPoint))
   let accepted = 0
   let seen = 0
+  let frameStart = performance.now()
 
   for (
     let pointIndex = 0;
@@ -461,6 +491,18 @@ const streamLasPositions = async (
       accepted += 1
 
       if (accepted >= targetPoints) break
+      if (i % 4096 === 0 && performance.now() - frameStart > 12) {
+        await yieldToMainThread()
+        frameStart = performance.now()
+      }
+    }
+
+    if (options.signal?.aborted) {
+      return {
+        points: new Float32Array(),
+        colors: null,
+        acceptedPoints: 0,
+      }
     }
 
     options.onProgress?.({
@@ -524,7 +566,7 @@ export const loadLasPointCloud = async (
 
   const batches = await loadInBatches(file, LASLoader, {
     las: { decompressed: true },
-    worker: false,
+    worker: true,
   })
 
   for await (const batch of batches) {

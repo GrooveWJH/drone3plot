@@ -100,7 +100,15 @@ const WaypointMarker = ({
           />
         </mesh>
         <Html position={[0, 0, UI_CONFIG.waypoint.labelOffsetZ]} center>
-          <div className="waypoint-label">#{index + 1}</div>
+          <div
+            className="waypoint-label"
+            onClick={(event) => {
+              event.stopPropagation()
+              onSelect()
+            }}
+          >
+            #{index + 1}
+          </div>
         </Html>
       </group>
     </>

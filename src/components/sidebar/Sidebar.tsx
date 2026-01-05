@@ -9,6 +9,7 @@ export type SidebarProps = {
   isLoading: boolean
   error: string | null
   onFileSelect: (file: File) => void
+  onClosePointCloud: () => void
   pointCloudFileName: string | null
   onAddWaypoint: () => void
   waypoints: WaypointData[]
@@ -47,6 +48,7 @@ const Sidebar = ({
   isLoading,
   error,
   onFileSelect,
+  onClosePointCloud,
   pointCloudFileName,
   onAddWaypoint,
   waypoints,
@@ -75,18 +77,14 @@ const Sidebar = ({
   onTranslateCloud,
 }: SidebarProps) => (
   <aside className="control-dock">
-    <div className="dock-hero">
-      <h1>任务控制</h1>
-      <p>规划、调整并导出航线。</p>
-    </div>
-
-    <PointCloudPanel
-      stats={stats}
-      isLoading={isLoading}
-      error={error}
-      onFileSelect={onFileSelect}
-      fileName={pointCloudFileName}
-    />
+      <PointCloudPanel
+        stats={stats}
+        isLoading={isLoading}
+        error={error}
+        onFileSelect={onFileSelect}
+        onClosePointCloud={onClosePointCloud}
+        fileName={pointCloudFileName}
+      />
 
     {hasPointCloud && (
       <CloudTransformPanel

@@ -38,7 +38,9 @@ const writeLocalList = (items: TrajectoryMeta[]) => {
   localStorage.setItem(LIST_KEY, JSON.stringify(items))
 }
 
-export const getTrajectoryOptions = (builtIns: BuiltInTrajectory[]): TrajectoryMeta[] => {
+export const getTrajectoryOptions = (
+  builtIns: ReadonlyArray<BuiltInTrajectory>
+): TrajectoryMeta[] => {
   const localList = readLocalList()
   const builtIds = new Set(builtIns.map((item) => item.id))
   const localLabels = new Set(localList.map((item) => normalizeLabel(item.label)))
@@ -96,6 +98,6 @@ export const deleteLocalTrajectory = (id: string) => {
 }
 
 export const findFallbackTrajectoryId = (
-  builtIns: BuiltInTrajectory[],
+  builtIns: ReadonlyArray<BuiltInTrajectory>,
   localOptions: TrajectoryMeta[]
 ) => builtIns[0]?.id ?? localOptions.find((item) => item.source === 'local')?.id ?? 'default'

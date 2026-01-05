@@ -50,13 +50,22 @@ const TrajectoryPanel = ({
       />
     </div>
     <div className="button-row">
-      <button className="primary" onClick={onSaveTrajectory}>
+      <button className="primary with-icon" onClick={onSaveTrajectory}>
+        <span className="material-symbols-outlined" aria-hidden="true">
+          save
+        </span>
         保存
       </button>
-      <button className="ghost" onClick={onExportTrajectoryFile}>
+      <button className="ghost with-icon" onClick={onExportTrajectoryFile}>
+        <span className="material-symbols-outlined" aria-hidden="true">
+          download
+        </span>
         导出
       </button>
-      <button className="ghost danger" onClick={onDeleteTrajectory}>
+      <button className="ghost danger with-icon" onClick={onDeleteTrajectory}>
+        <span className="material-symbols-outlined" aria-hidden="true">
+          delete
+        </span>
         删除
       </button>
     </div>

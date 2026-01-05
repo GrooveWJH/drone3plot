@@ -6,6 +6,7 @@ export type PointCloudPanelProps = {
   isLoading: boolean
   error: string | null
   onFileSelect: (file: File) => void
+  onClosePointCloud: () => void
   fileName: string | null
 }
 
@@ -16,9 +17,14 @@ const PointCloudPanel = ({
   isLoading,
   error,
   onFileSelect,
+  onClosePointCloud,
   fileName,
 }: PointCloudPanelProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const totalTarget = stats
+    ? Math.max(1, Math.ceil(stats.totalPoints / Math.max(1, stats.sampleEvery)))
+    : null
+  const progress = stats && totalTarget ? Math.min(1, stats.loadedPoints / totalTarget) : null
   return (
     <section className="dock-card">
       <div className="dock-card-head">
@@ -27,13 +33,29 @@ const PointCloudPanel = ({
       </div>
       <div className="field">
         <label htmlFor="las-file">导入点云</label>
-        <button
-          className="ghost"
-          type="button"
-          onClick={() => inputRef.current?.click()}
-        >
-          选择文件
-        </button>
+        <div className="inline-actions">
+          <button
+            className="ghost with-icon"
+            type="button"
+            onClick={() => inputRef.current?.click()}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              folder_open
+            </span>
+            选择文件
+          </button>
+          <button
+            className="ghost danger with-icon"
+            type="button"
+            onClick={onClosePointCloud}
+            disabled={!fileName}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              close
+            </span>
+            关闭
+          </button>
+        </div>
         <span className="field-hint">{fileName ?? '未选择文件'}</span>
         <input
           ref={inputRef}
@@ -48,23 +70,25 @@ const PointCloudPanel = ({
           }}
         />
       </div>
-      {stats && (
-        <div className="stats-grid">
-          <div className="stat-card">
-            <span>总点数</span>
-            <strong>{formatNumber(stats.totalPoints)}</strong>
+      {isLoading && (
+        <div className="status-pill">正在加载点云…</div>
+      )}
+      {isLoading && progress !== null && (
+        <div className="progress-block">
+          <div className="progress-track">
+            <div
+              className="progress-fill"
+              style={{ width: `${Math.round(progress * 100)}%` }}
+            />
           </div>
-          <div className="stat-card">
-            <span>加载点数</span>
-            <strong>{formatNumber(stats.loadedPoints)}</strong>
-          </div>
-          <div className="stat-card">
-            <span>采样步长</span>
-            <strong>{stats.sampleEvery}</strong>
+          <div className="progress-meta">
+            <span>
+              {formatNumber(Math.min(stats.loadedPoints, totalTarget))} / {formatNumber(totalTarget)}
+            </span>
+            <span>{Math.round(progress * 100)}%</span>
           </div>
         </div>
       )}
-      {isLoading && <div className="status-pill">正在加载 LAS…</div>}
       {error && <div className="status-pill error">{error}</div>}
     </section>
   )

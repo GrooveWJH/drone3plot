@@ -268,6 +268,32 @@
   border-color: rgba(185, 74, 42, 0.35);
 }
 
+.progress-block {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(27, 26, 23, 0.1);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #d66a3c, #e18d5c);
+  transition: width 0.2s ease;
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
 .button-row {
   display: flex;
   align-items: center;
@@ -276,12 +302,34 @@
   flex-wrap: nowrap;
 }
 
+.inline-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+  align-items: center;
+}
+
+.inline-actions .ghost {
+  width: 100%;
+  justify-content: center;
+}
+
 .primary,
 .ghost,
 .icon {
   border: none;
   cursor: pointer;
   font-family: inherit;
+}
+
+.primary.with-icon,
+.ghost.with-icon,
+.icon.with-icon,
+.dashboard-tab.with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 button:disabled {
@@ -585,6 +633,140 @@ button:disabled {
   height: 100%;
 }
 
+.viewport-file {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 14px;
+  border: 1px solid rgba(214, 106, 60, 0.35);
+  background: rgba(255, 248, 238, 0.9);
+  color: #8b4d28;
+  font-weight: 600;
+  font-size: 0.95rem;
+  z-index: 2;
+}
+
+.dashboard-tab {
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 26, 23, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-dock {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 0.35rem;
+  align-items: center;
+  z-index: 50;
+}
+
+.dashboard-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(120, 120, 120, 0.6);
+  box-shadow: 0 0 0 rgba(54, 210, 110, 0);
+}
+
+.dashboard-status-dot.online {
+  background: #36d26e;
+  box-shadow: 0 0 8px rgba(54, 210, 110, 0.6);
+  animation: status-pulse 1.4s ease-in-out infinite;
+}
+
+.dashboard-battery {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(27, 26, 23, 0.12);
+  border: 1px solid rgba(27, 26, 23, 0.2);
+  overflow: hidden;
+}
+
+.dashboard-battery-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #36d26e, #8be85f);
+  transition: width 0.3s ease;
+}
+
+@keyframes status-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+}
+
+.dashboard-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 12, 18, 0.45);
+  display: grid;
+  place-items: end center;
+  z-index: 60;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.dashboard-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.dashboard-panel {
+  width: min(1100px, 96vw);
+  height: min(720px, 78vh);
+  margin-bottom: 72px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(27, 26, 23, 0.12);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(27, 26, 23, 0.08);
+  background: rgba(255, 248, 238, 0.85);
+  font-weight: 600;
+}
+
+.dashboard-panel iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
+}
+
+.dashboard-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 canvas {
   display: block;
 }
@@ -598,7 +780,75 @@ canvas {
   font-weight: 600;
   border: 1px solid rgba(214, 106, 60, 0.25);
   white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.media-dock {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+}
+
+.media-tab {
+  padding: 0.7rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 26, 23, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  font-size: 1.05rem;
+}
+
+.media-drawer {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  justify-items: end;
+  z-index: 65;
   pointer-events: none;
+}
+
+.media-drawer-panel {
+  width: min(520px, 92vw);
+  height: 100%;
+  background: #fff;
+  border-left: 1px solid rgba(27, 26, 23, 0.12);
+  box-shadow: -18px 0 40px rgba(15, 18, 28, 0.18);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  pointer-events: auto;
+}
+
+.media-drawer.is-open {
+  pointer-events: none;
+}
+
+.media-drawer.is-open .media-drawer-panel {
+  transform: translateX(0);
+}
+
+.media-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(27, 26, 23, 0.08);
+  background: rgba(255, 248, 238, 0.85);
+  font-weight: 600;
+}
+
+.media-drawer iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 @media (max-width: 1080px) {
@@ -644,4 +894,33 @@ canvas {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 100 700;
+  src: url('/fonts/material-symbols-outlined.ttf') format('truetype');
+  font-display: swap;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: 400;
+  font-style: normal;
+  font-size: 1.1em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
 }
