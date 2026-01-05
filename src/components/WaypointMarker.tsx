@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import type { TransformControls as TransformControlsImpl } from 'three-stdlib'
 import type { TransformMode, WaypointData } from '../types/mission'
 import { UI_CONFIG } from '../config/ui'
+import WaypointShape from './WaypointShape'
 
 export type WaypointMarkerProps = {
   waypoint: WaypointData
@@ -80,25 +81,14 @@ const WaypointMarker = ({
           onSelect()
         }}
       >
-        <mesh>
-          <sphereGeometry args={[UI_CONFIG.waypoint.sphereRadius, 18, 18]} />
-          <meshStandardMaterial
-            color={waypoint.takePhoto ? '#ff2d55' : selected ? '#d66a3c' : '#335591'}
-            emissive={waypoint.takePhoto ? '#ff2d55' : '#000000'}
-            emissiveIntensity={waypoint.takePhoto ? 0.8 : 0}
-          />
-        </mesh>
-        <mesh
-          position={[UI_CONFIG.waypoint.coneOffsetX, 0, 0]}
-          rotation={[0, 0, -Math.PI / 2]}
-        >
-          <coneGeometry args={[UI_CONFIG.waypoint.coneRadius, UI_CONFIG.waypoint.coneHeight, 10]} />
-          <meshStandardMaterial
-            color={waypoint.takePhoto ? '#53b9ff' : '#335591'}
-            emissive={waypoint.takePhoto ? '#1f6fff' : '#0f1c33'}
-            emissiveIntensity={waypoint.takePhoto ? 0.35 : 0.2}
-          />
-        </mesh>
+        <WaypointShape
+          sphereColor={waypoint.takePhoto ? '#ff2d55' : selected ? '#d66a3c' : '#335591'}
+          coneColor={waypoint.takePhoto ? '#53b9ff' : '#335591'}
+          sphereEmissive={waypoint.takePhoto ? '#ff2d55' : '#000000'}
+          coneEmissive={waypoint.takePhoto ? '#1f6fff' : '#0f1c33'}
+          sphereEmissiveIntensity={waypoint.takePhoto ? 0.8 : 0}
+          coneEmissiveIntensity={waypoint.takePhoto ? 0.35 : 0.2}
+        />
         <Html position={[0, 0, UI_CONFIG.waypoint.labelOffsetZ]} center>
           <div
             className="waypoint-label"

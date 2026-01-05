@@ -36,6 +36,7 @@ export const usePointCloudLoader = ({
   const [stats, setStats] = useState<PointCloudStats | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const workerRef = useRef<Worker | null>(null)
   const lastFingerprintRef = useRef<string | null>(null)
@@ -91,6 +92,7 @@ export const usePointCloudLoader = ({
       const totalStart = performance.now()
       logTiming(file.name, 'start')
       logTiming(file.name, `budgetMB=${budgetMB.toFixed(2)}`)
+      setFileName(file.name)
       onPrepareFile(file.name)
       let hasCleared = false
       const clearExisting = () => {
@@ -106,7 +108,6 @@ export const usePointCloudLoader = ({
           flushRef.current = null
         }
         setStats(null)
-        onResetCloudTransform()
       }
 
       const fingerprint = `${file.name}:${file.size}:${file.lastModified}`
@@ -318,6 +319,7 @@ export const usePointCloudLoader = ({
     setStats(null)
     setError(null)
     setIsLoading(false)
+    setFileName(null)
     onResetCloudTransform()
   }, [onResetCloudTransform])
 
@@ -334,6 +336,7 @@ export const usePointCloudLoader = ({
     pointCloudChunks,
     pointCloudChunkVersion,
     hasPointCloud: pointCloudChunks.length > 0 || Boolean(pointCloud),
+    fileName,
     stats,
     isLoading,
     error,

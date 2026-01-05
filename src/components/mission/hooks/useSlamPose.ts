@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
-import type { ControlState } from './useControlStatus'
 
 export type SlamSnapshot = {
   x: number | null
@@ -20,8 +19,12 @@ export type DronePose = {
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value)
 
-export const useSlamPose = (controlState: ControlState) => {
+const POSE_STALE_MS = 3000
+
+export const useSlamPose = () => {
   const [slamSnapshot, setSlamSnapshot] = useState<SlamSnapshot | null>(null)
+  const [isStale, setIsStale] = useState(false)
+  const staleTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
     const socket = io('/pose')
@@ -41,21 +44,28 @@ export const useSlamPose = (controlState: ControlState) => {
         yaw: yaw ?? null,
         status: status ?? null,
       })
+      setIsStale(false)
+      if (staleTimerRef.current) {
+        window.clearTimeout(staleTimerRef.current)
+      }
+      staleTimerRef.current = window.setTimeout(() => {
+        setIsStale(true)
+      }, POSE_STALE_MS)
     })
     return () => {
       socket.disconnect()
+      if (staleTimerRef.current) {
+        window.clearTimeout(staleTimerRef.current)
+      }
     }
   }, [])
 
   const dronePose = useMemo<DronePose | null>(() => {
-    if (controlState !== 'drc_ready') return null
-    if (!slamSnapshot) return null
-    if (slamSnapshot.status !== 'running') return null
+    if (!slamSnapshot || isStale) return null
     if (
       !isFiniteNumber(slamSnapshot.x) ||
       !isFiniteNumber(slamSnapshot.y) ||
-      !isFiniteNumber(slamSnapshot.z) ||
-      !isFiniteNumber(slamSnapshot.yaw)
+      !isFiniteNumber(slamSnapshot.z)
     ) {
       return null
     }
@@ -63,9 +73,9 @@ export const useSlamPose = (controlState: ControlState) => {
       x: slamSnapshot.x,
       y: slamSnapshot.y,
       z: slamSnapshot.z,
-      yaw: slamSnapshot.yaw,
+      yaw: isFiniteNumber(slamSnapshot.yaw) ? slamSnapshot.yaw : 0,
     }
-  }, [controlState, slamSnapshot])
+  }, [slamSnapshot, isStale])
 
   return { slamSnapshot, dronePose }
 }

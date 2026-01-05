@@ -8,6 +8,7 @@ import PointCloudLayer from '../../lib/pointcloud/src/PointCloudLayer'
 import WaypointMarker from '../WaypointMarker'
 import type { TransformMode, WaypointData } from '../../types/mission'
 import { UI_CONFIG } from '../../config/ui'
+import WaypointShape from '../WaypointShape'
 import GpuUploadTimer from '../../lib/pointcloud/src/GpuUploadTimer'
 import RenderManager from './RenderManager'
 import { degToRad } from './utils'
@@ -201,14 +202,14 @@ const MissionViewport = ({
             position={[dronePose.x, dronePose.y, dronePose.z]}
             rotation={[0, 0, degToRad(dronePose.yaw ?? 0)]}
           >
-            <mesh>
-              <sphereGeometry args={[0.18, 16, 16]} />
-              <meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={0.4} />
-            </mesh>
-            <mesh position={[0.35, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
-              <coneGeometry args={[0.1, 0.28, 10]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={0.35} />
-            </mesh>
+            <WaypointShape
+              sphereColor="#22c55e"
+              coneColor="#38bdf8"
+              sphereEmissive="#22c55e"
+              coneEmissive="#38bdf8"
+              sphereEmissiveIntensity={0.4}
+              coneEmissiveIntensity={0.35}
+            />
           </group>
         )}
         <GizmoHelper alignment="top-right" margin={[72, 72]}>

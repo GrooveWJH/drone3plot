@@ -58,6 +58,7 @@ const {
   pointCloud,
   pointCloudChunks,
   pointCloudChunkVersion,
+  fileName,
   pointsColor,
   pointRadius,
   pointSizeAttenuation,

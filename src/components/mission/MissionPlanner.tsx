@@ -26,7 +26,7 @@ const MissionPlanner = () => {
   usePerfObservers()
 
   const { controlState, batteryPercent } = useControlStatus()
-  const { dronePose } = useSlamPose(controlState)
+  const { dronePose } = useSlamPose()
   const {
     cloudRotation,
     cloudOffset,
@@ -49,6 +49,7 @@ const MissionPlanner = () => {
     pointCloudChunks,
     pointCloudChunkVersion,
     hasPointCloud,
+    fileName: pointCloudFileName,
     stats,
     isLoading,
     error,
@@ -122,7 +123,7 @@ const MissionPlanner = () => {
           error={error}
           onFileSelect={handleFileSelect}
           onClosePointCloud={clearPointCloud}
-          pointCloudFileName={cloudFileName}
+          pointCloudFileName={pointCloudFileName}
           onAddWaypoint={handleAddWaypoint}
           waypoints={waypoints}
           selectedId={selectedId}
