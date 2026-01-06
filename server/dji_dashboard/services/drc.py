@@ -11,15 +11,11 @@ from pydjimqtt.core.service_caller import ServiceCaller
 from pydjimqtt.services.commands import enter_drc_mode, request_control_auth
 from pydjimqtt.services.heartbeat import start_heartbeat, stop_heartbeat
 
+from dji_dashboard.domain.drc_state import DrcEvent, DrcState, TRANSITIONS
+
 
 class DrcControlService:
     """Split DRC flow into request + confirm steps for UI-driven control."""
-
-    STATE_IDLE = "idle"
-    STATE_DISCONNECTED = "disconnected"
-    STATE_WAITING = "waiting_for_user"
-    STATE_READY = "drc_ready"
-    STATE_ERROR = "error"
 
     def __init__(
         self,
@@ -41,10 +37,15 @@ class DrcControlService:
         self.osd_frequency = osd_frequency
         self.hsi_frequency = hsi_frequency
         self.heartbeat_interval = heartbeat_interval
-        self._state = self.STATE_IDLE
+        self._state = DrcState.IDLE
         self._last_error: Optional[str] = None
         self._heartbeat_thread: Optional[threading.Thread] = None
         self._lock = threading.Lock()
+
+    def _transition(self, event: DrcEvent) -> None:
+        next_state = TRANSITIONS.get((self._state, event))
+        if next_state:
+            self._state = next_state
 
     def status(self) -> Dict[str, Optional[str]]:
         with self._lock:
@@ -54,19 +55,19 @@ class DrcControlService:
                     is_online = self.client.is_online(timeout=3.0)
                 except Exception:
                     is_online = True
-            if not is_online and self._state != self.STATE_WAITING:
+            if not is_online and self._state != DrcState.WAITING:
                 print("DrcControlService.status(): MQTT client offline, resetting state.")
-                self._state = self.STATE_DISCONNECTED
+                self._transition(DrcEvent.OFFLINE)
                 self._last_error = None
                 if self._heartbeat_thread:
                     stop_heartbeat(self._heartbeat_thread)
                     self._heartbeat_thread = None
-            return {"state": self._state, "last_error": self._last_error}
+            return {"state": self._state.value, "last_error": self._last_error}
 
     def request_control(self, user_id: Optional[str] = None, user_callsign: Optional[str] = None) -> Dict[str, Optional[str]]:
         with self._lock:
-            if self._state in {self.STATE_WAITING, self.STATE_READY}:
-                return {"state": self._state, "last_error": self._last_error}
+            if self._state in {DrcState.WAITING, DrcState.READY}:
+                return {"state": self._state.value, "last_error": self._last_error}
             self._last_error = None
 
         resolved_user_id = user_id or self.default_user_id
@@ -85,17 +86,17 @@ class DrcControlService:
             )
         except Exception as exc:
             with self._lock:
-                self._state = self.STATE_ERROR
+                self._transition(DrcEvent.REQUEST_FAILED)
                 self._last_error = str(exc)
-                return {"state": self._state, "last_error": self._last_error}
+                return {"state": self._state.value, "last_error": self._last_error}
 
         with self._lock:
-            self._state = self.STATE_WAITING
-            return {"state": self._state, "last_error": None}
+            self._transition(DrcEvent.REQUESTED)
+            return {"state": self._state.value, "last_error": None}
 
     def confirm_control(self) -> Dict[str, Optional[str]]:
         with self._lock:
-            if self._state != self.STATE_WAITING:
+            if self._state != DrcState.WAITING:
                 raise RuntimeError("Control auth not requested yet.")
             self._last_error = None
 
@@ -120,15 +121,18 @@ class DrcControlService:
             self._heartbeat_thread = start_heartbeat(self.client, interval=self.heartbeat_interval)
         except Exception as exc:
             with self._lock:
-                self._state = self.STATE_ERROR
+                self._transition(DrcEvent.CONFIRM_FAILED)
                 self._last_error = str(exc)
-                return {"state": self._state, "last_error": self._last_error}
+                return {"state": self._state.value, "last_error": self._last_error}
 
         with self._lock:
-            self._state = self.STATE_READY
-            return {"state": self._state, "last_error": None}
+            self._transition(DrcEvent.CONFIRMED)
+            return {"state": self._state.value, "last_error": None}
 
     def shutdown(self) -> None:
         if self._heartbeat_thread:
             stop_heartbeat(self._heartbeat_thread)
             self._heartbeat_thread = None
+        with self._lock:
+            self._last_error = None
+            self._transition(DrcEvent.RESET)

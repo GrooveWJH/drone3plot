@@ -1,14 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useDrcStateMachine, type DrcState } from '../state/drcStateMachine'
 
-export type ControlState =
-  | 'drc_ready'
-  | 'waiting_for_user'
-  | 'disconnected'
-  | 'error'
-  | 'unavailable'
+export type ControlState = DrcState
 
 export const useControlStatus = () => {
-  const [controlState, setControlState] = useState<ControlState>('disconnected')
+  const { drcState, updateStatus, markUnavailable } = useDrcStateMachine()
   const [batteryPercent, setBatteryPercent] = useState<number | null>(null)
 
   useEffect(() => {
@@ -18,13 +14,22 @@ export const useControlStatus = () => {
       try {
         const response = await fetch('/api/control/auth/status')
         if (!response.ok) throw new Error('status')
-        const payload = (await response.json()) as { state?: string; error?: string }
-        const nextState = (payload.state ?? (payload.error ? 'unavailable' : 'disconnected')) as ControlState
-        if (isMounted) setControlState(nextState)
+        const payload = (await response.json()) as {
+          state?: string
+          last_error?: string | null
+          error?: string
+        }
+        const rawState = payload.state ?? 'disconnected'
+        const nextState = (rawState as ControlState) ?? 'disconnected'
+        if (isMounted) {
+          updateStatus(nextState, payload.last_error ?? null)
+        }
         return nextState
       } catch {
-        if (isMounted) setControlState('unavailable')
-        return 'unavailable'
+        if (isMounted) {
+          markUnavailable()
+        }
+        return 'unavailable' as ControlState
       }
     }
 
@@ -60,7 +65,7 @@ export const useControlStatus = () => {
       isMounted = false
       window.clearInterval(timer)
     }
-  }, [])
+  }, [markUnavailable, updateStatus])
 
-  return { controlState, batteryPercent }
+  return { controlState: drcState, batteryPercent }
 }

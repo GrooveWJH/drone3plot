@@ -12,6 +12,7 @@ import { usePointCloudLoader } from '../../lib/pointcloud/src/usePointCloudLoade
 import { useSlamPose } from './hooks/useSlamPose'
 import { useTrajectoryState } from './hooks/useTrajectoryState'
 import { useWaypointsState } from './hooks/useWaypointsState'
+import { useMissionStateMachine } from './state/missionStateMachine'
 import { normalizeDegrees, radToDeg } from './utils'
 
 const MissionPlanner = () => {
@@ -22,7 +23,6 @@ const MissionPlanner = () => {
   const [isCloudTransforming, setIsCloudTransforming] = useState(false)
   const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [isMediaOpen, setIsMediaOpen] = useState(false)
-  const [isTrajectoryLocked, setIsTrajectoryLocked] = useState(false)
   const dashboardToggleRef = useRef<HTMLButtonElement | null>(null)
 
   usePerfObservers()
@@ -65,6 +65,12 @@ const MissionPlanner = () => {
     onResetCloudTransform: resetCloudTransform,
     isInteracting: isOrbiting || isTransforming || isCloudTransforming,
   })
+  const {
+    state: missionState,
+    isTrajectoryLocked,
+    canEditWaypoints,
+    toggleTrajectoryLock,
+  } = useMissionStateMachine({ hasPointCloud, isLoading })
   useCloudTransformSync({
     cloudGroupRef,
     cloudRotation,
@@ -155,24 +161,24 @@ const MissionPlanner = () => {
   }, [isOrbiting, isTransforming, isCloudTransforming, requestRender])
 
   const handleAddWaypointLocked = useCallback(() => {
-    if (isTrajectoryLocked) return
+    if (!canEditWaypoints) return
     handleAddWaypoint()
-  }, [handleAddWaypoint, isTrajectoryLocked])
+  }, [handleAddWaypoint, canEditWaypoints])
 
   const handleDeleteWaypointLocked = useCallback(
     (id: string) => {
-      if (isTrajectoryLocked) return
+      if (!canEditWaypoints) return
       handleDeleteWaypoint(id)
     },
-    [handleDeleteWaypoint, isTrajectoryLocked]
+    [handleDeleteWaypoint, canEditWaypoints]
   )
 
   const handleReorderWaypointLocked = useCallback(
     (id: string, direction: 'up' | 'down') => {
-      if (isTrajectoryLocked) return
+      if (!canEditWaypoints) return
       handleReorderWaypoint(id, direction)
     },
-    [handleReorderWaypoint, isTrajectoryLocked]
+    [handleReorderWaypoint, canEditWaypoints]
   )
 
   const handleUpdateWaypointLocked = useCallback(
@@ -182,38 +188,38 @@ const MissionPlanner = () => {
       rotation: [number, number, number],
       takePhoto?: boolean
     ) => {
-      if (isTrajectoryLocked) return
+      if (!canEditWaypoints) return
       handleUpdateWaypoint(id, position, rotation, takePhoto)
     },
-    [handleUpdateWaypoint, isTrajectoryLocked]
+    [handleUpdateWaypoint, canEditWaypoints]
   )
 
   const handleTogglePhotoLocked = useCallback(
     (id: string, value: boolean) => {
-      if (isTrajectoryLocked) return
+      if (!canEditWaypoints) return
       handleTogglePhoto(id, value)
     },
-    [handleTogglePhoto, isTrajectoryLocked]
+    [handleTogglePhoto, canEditWaypoints]
   )
 
   const handleSelectWaypointLocked = useCallback(
     (id: string) => {
-      if (isTrajectoryLocked) return
+      if (!canEditWaypoints) return
       handleSelectWaypointFromSidebar(id)
     },
-    [handleSelectWaypointFromSidebar, isTrajectoryLocked]
+    [handleSelectWaypointFromSidebar, canEditWaypoints]
   )
 
   const handleSelectWaypointSceneLocked = useCallback(
     (id: string) => {
-      if (isTrajectoryLocked) return
+      if (!canEditWaypoints) return
       handleSelectWaypointFromScene(id)
     },
-    [handleSelectWaypointFromScene, isTrajectoryLocked]
+    [handleSelectWaypointFromScene, canEditWaypoints]
   )
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-mission-state={missionState}>
       <MissionTopbar trajectoryName={trajectoryName} stats={stats} />
       <div className="workspace">
         <Sidebar
@@ -267,7 +273,7 @@ const MissionPlanner = () => {
           cloudTransformMode={cloudTransformMode}
           dronePose={dronePose}
           isTrajectoryLocked={isTrajectoryLocked}
-          onToggleTrajectoryLock={() => setIsTrajectoryLocked((prev) => !prev)}
+          onToggleTrajectoryLock={toggleTrajectoryLock}
           isTransforming={isTransforming}
           isCloudTransforming={isCloudTransforming}
           onSetIsOrbiting={setIsOrbiting}
