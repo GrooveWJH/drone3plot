@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import atexit
+import logging
+import threading
+import time
 from pathlib import Path
 import sys
 
@@ -50,5 +53,22 @@ def create_app(config_name: str | None = None) -> Flask:
     register_socketio_events(socketio, registry)
 
     atexit.register(registry.shutdown)
+
+    def _auto_connect() -> None:
+        logger = logging.getLogger("dji_dashboard")
+        max_attempts = 3
+        for attempt in range(1, max_attempts + 1):
+            try:
+                logger.info("[mqtt] auto-connect attempt %d/%d", attempt, max_attempts)
+                registry.connect()
+                logger.info("[mqtt] auto-connect succeeded")
+                return
+            except Exception as exc:
+                registry.shutdown()
+                logger.warning("[mqtt] auto-connect failed: %s", exc)
+                time.sleep(1.0)
+        logger.warning("[mqtt] auto-connect aborted after %d failures; wait for control request", max_attempts)
+
+    threading.Thread(target=_auto_connect, name="mqtt-auto-connect", daemon=True).start()
 
     return app

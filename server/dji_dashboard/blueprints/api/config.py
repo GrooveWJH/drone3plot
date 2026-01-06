@@ -59,7 +59,6 @@ def update_config_values():
         if registry.is_connected:
             return jsonify({"error": "Cannot update config while connected."}), 409
         registry.reconfigure(current_app.config)
-
     return jsonify({
         "status": "ok",
         "config": _serialize_config(current_app.config),

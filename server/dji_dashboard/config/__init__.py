@@ -39,7 +39,7 @@ class BaseConfig:
 
     SECRET_KEY: str = os.getenv("DASHBOARD_SECRET_KEY", "dev-secret-key")
     GATEWAY_SN: str = os.getenv("DJI_GATEWAY_SN", "9N9CN2B00121JN")
-    MQTT_HOST: str = os.getenv("DJI_MQTT_HOST", "192.168.20.186")
+    MQTT_HOST: str = os.getenv("DJI_MQTT_HOST", "127.0.0.1")
     MQTT_PORT: int = int(os.getenv("DJI_MQTT_PORT", "1883"))
     MQTT_USERNAME: str = os.getenv("DJI_MQTT_USERNAME", "admin")
     MQTT_PASSWORD: str = os.getenv("DJI_MQTT_PASSWORD", "yundrone123")
