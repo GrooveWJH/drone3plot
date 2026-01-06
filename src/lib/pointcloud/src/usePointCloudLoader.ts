@@ -45,6 +45,8 @@ export const usePointCloudLoader = ({
   const chunkBufferRef = useRef<Array<{ points: Float32Array; colors: Float32Array | null }>>([])
   const flushRef = useRef<number | null>(null)
   const isPausedRef = useRef(false)
+  const hasRenderedChunksRef = useRef(false)
+  const pausedFlushRef = useRef<number | null>(null)
   const budgetMB = UI_CONFIG.pointCloud.budgetMB
   const chunkSize = UI_CONFIG.pointCloud.chunkSize
 
@@ -55,6 +57,7 @@ export const usePointCloudLoader = ({
       if (isPausedRef.current || chunkBufferRef.current.length === 0) return
       const nextChunks = chunkBufferRef.current
       chunkBufferRef.current = []
+      hasRenderedChunksRef.current = true
       setPointCloudChunks((prev) => [...prev, ...nextChunks])
       if (chunkBufferRef.current.length > 0) {
         flushChunks()
@@ -70,6 +73,10 @@ export const usePointCloudLoader = ({
     if (isInteracting && flushRef.current) {
       cancelAnimationFrame(flushRef.current)
       flushRef.current = null
+    }
+    if (!isInteracting && pausedFlushRef.current) {
+      window.clearTimeout(pausedFlushRef.current)
+      pausedFlushRef.current = null
     }
   }, [isInteracting, flushChunks])
 
@@ -103,6 +110,7 @@ export const usePointCloudLoader = ({
         setPointCloudChunks([])
         setPointCloudChunkVersion((prev) => prev + 1)
         chunkBufferRef.current = []
+        hasRenderedChunksRef.current = false
         if (flushRef.current) {
           cancelAnimationFrame(flushRef.current)
           flushRef.current = null
@@ -122,7 +130,25 @@ export const usePointCloudLoader = ({
       pendingHashRef.current = null
       const enqueueChunk = (chunk: { points: Float32Array; colors: Float32Array | null }) => {
         chunkBufferRef.current.push(chunk)
-        flushChunks()
+        if (!hasRenderedChunksRef.current) {
+          const nextChunks = chunkBufferRef.current
+          chunkBufferRef.current = []
+          hasRenderedChunksRef.current = true
+          setPointCloudChunks((prev) => [...prev, ...nextChunks])
+          return
+        }
+        if (!isPausedRef.current) {
+          flushChunks()
+          return
+        }
+        if (pausedFlushRef.current) return
+        pausedFlushRef.current = window.setTimeout(() => {
+          pausedFlushRef.current = null
+          if (chunkBufferRef.current.length === 0) return
+          const nextChunks = chunkBufferRef.current
+          chunkBufferRef.current = []
+          setPointCloudChunks((prev) => [...prev, ...nextChunks])
+        }, 200)
       }
 
       try {

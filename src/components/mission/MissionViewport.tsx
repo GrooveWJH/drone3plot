@@ -1,6 +1,6 @@
 import type { RefObject } from 'react'
-import { useEffect } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { GizmoHelper, GizmoViewport, Line, OrbitControls, TransformControls } from '@react-three/drei'
 import type { Group } from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
@@ -10,7 +10,7 @@ import type { TransformMode, WaypointData } from '../../types/mission'
 import { UI_CONFIG } from '../../config/ui'
 import WaypointShape from '../WaypointShape'
 import GpuUploadTimer from '../../lib/pointcloud/src/GpuUploadTimer'
-import RenderManager from './RenderManager'
+import AdaptiveRenderManager from '../../lib/pointcloud/src/AdaptiveRenderManager'
 import { degToRad } from './utils'
 
 let lastFrameLogAt = 0
@@ -89,6 +89,11 @@ const MissionViewport = ({
   cloudGroupRef,
   orbitRef,
 }: MissionViewportProps) => {
+  const [fps, setFps] = useState<number | null>(null)
+  const handleFps = useCallback((value: number) => {
+    setFps(value)
+  }, [])
+
   useEffect(() => {
     if (!pointCloud && pointCloudChunks.length === 0) return undefined
     const timingLabel = '[pointcloud] first-frame'
@@ -110,7 +115,13 @@ const MissionViewport = ({
 
   return (
     <main className="viewport">
-      {cloudFileName && <div className="viewport-file">{cloudFileName}</div>}
+      {fps !== null && (
+        <div className={`viewport-file${cloudFileName ? ' has-filename' : ''}`}>
+          <span className="viewport-filename">{cloudFileName ?? ''}</span>
+          <span className="viewport-sep">·</span>
+          <span className="viewport-fps">FPS {fps.toFixed(0)}</span>
+        </div>
+      )}
       <div
         className={`trajectory-lock ${isTrajectoryLocked ? 'is-locked' : ''}`}
         data-trajectory-lock-state
@@ -132,13 +143,14 @@ const MissionViewport = ({
         camera={{ position: [12, 12, 12], fov: 45, up: [0, 0, 1] }}
         onPointerMissed={onPointerMissed}
       >
-      <RenderManager
-        deps={renderManagerDeps}
-        active={renderManagerActive}
-        onInvalidate={onInvalidate}
-      />
-      <GpuUploadTimer enabled={Boolean(pointCloud) || pointCloudChunks.length > 0} />
-      <color attach="background" args={['#f7efe1']} />
+        <FpsTracker onFps={handleFps} />
+        <AdaptiveRenderManager
+          deps={renderManagerDeps}
+          active={renderManagerActive}
+          onInvalidate={onInvalidate}
+        />
+        <GpuUploadTimer enabled={Boolean(pointCloud) || pointCloudChunks.length > 0} />
+        <color attach="background" args={['#f7efe1']} />
         {!pointCloud && pointCloudChunks.length === 0 && (
           <fog attach="fog" args={['#d8cbb8', 30, 120]} />
         )}
@@ -271,3 +283,25 @@ const MissionViewport = ({
 }
 
 export default MissionViewport
+
+type FpsTrackerProps = {
+  onFps: (value: number) => void
+}
+
+const FpsTracker = ({ onFps }: FpsTrackerProps) => {
+  const lastSampleRef = useRef(performance.now())
+  const frameCountRef = useRef(0)
+
+  useFrame(() => {
+    frameCountRef.current += 1
+    const now = performance.now()
+    const elapsed = now - lastSampleRef.current
+    if (elapsed < 200) return
+    const nextFps = (frameCountRef.current / elapsed) * 1000
+    frameCountRef.current = 0
+    lastSampleRef.current = now
+    onFps(nextFps)
+  })
+
+  return null
+}

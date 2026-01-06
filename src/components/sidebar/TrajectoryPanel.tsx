@@ -69,7 +69,6 @@ const TrajectoryPanel = ({
         删除
       </button>
     </div>
-    <p className="field-help">保存后会下载 JSON 文件，请放入 trajectories 目录。</p>
   </section>
 )
 

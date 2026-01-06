@@ -21,16 +21,18 @@ type MissionEvent =
 const missionReducer = (state: MissionState, event: MissionEvent): MissionState => {
   switch (event.type) {
     case 'POINTCLOUD_LOADING':
+      if (state === 'locked' || state === 'executing') return state
       return 'loading'
     case 'POINTCLOUD_LOADED':
       if (state === 'locked' || state === 'executing') return state
       return 'ready'
     case 'POINTCLOUD_CLEARED':
+      if (state === 'locked' || state === 'executing') return state
       return 'idle'
     case 'LOCK_TRAJECTORY':
-      return state === 'ready' ? 'locked' : state
+      return state === 'executing' ? state : 'locked'
     case 'UNLOCK_TRAJECTORY':
-      return state === 'locked' ? 'ready' : state
+      return 'ready'
     case 'EXECUTE':
       return state === 'locked' ? 'executing' : state
     case 'EXECUTE_DONE':
@@ -51,10 +53,10 @@ export const useMissionStateMachine = ({ hasPointCloud, isLoading }: MissionStat
   const [state, dispatch] = useReducer(missionReducer, 'idle')
 
   useEffect(() => {
-    if (isLoading) {
-      dispatch({ type: 'POINTCLOUD_LOADING' })
-    } else if (hasPointCloud) {
+    if (hasPointCloud) {
       dispatch({ type: 'POINTCLOUD_LOADED' })
+    } else if (isLoading) {
+      dispatch({ type: 'POINTCLOUD_LOADING' })
     } else {
       dispatch({ type: 'POINTCLOUD_CLEARED' })
     }
@@ -77,7 +79,7 @@ export const useMissionStateMachine = ({ hasPointCloud, isLoading }: MissionStat
   }, [state])
 
   const isTrajectoryLocked = state === 'locked' || state === 'executing'
-  const canEditWaypoints = state === 'ready'
+  const canEditWaypoints = !isTrajectoryLocked
 
   const derived = useMemo(
     () => ({

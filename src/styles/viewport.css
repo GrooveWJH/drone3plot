@@ -1,0 +1,78 @@
+.viewport {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  min-height: 0;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(27, 26, 23, 0.12);
+  height: 100%;
+}
+
+.viewport-file {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 14px;
+  border: 1px solid rgba(214, 106, 60, 0.35);
+  background: rgba(255, 248, 238, 0.9);
+  color: #8b4d28;
+  font-weight: 600;
+  font-size: 0.95rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.viewport-file:not(.has-filename) {
+  justify-content: center;
+}
+
+.viewport-file:not(.has-filename) .viewport-filename,
+.viewport-file:not(.has-filename) .viewport-sep {
+  display: none;
+}
+
+.trajectory-lock {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2;
+}
+
+.trajectory-lock-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 26, 23, 0.2);
+  background: rgba(255, 255, 255, 0.92);
+  font-weight: 600;
+  color: #5b3c2a;
+}
+
+.trajectory-lock.is-locked .trajectory-lock-button {
+  background: #e55c43;
+  border-color: #e55c43;
+  color: #fff8f0;
+}
+
+.waypoint-label {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 248, 238, 0.9);
+  color: #5f4b3a;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(214, 106, 60, 0.25);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+canvas {
+  display: block;
+}

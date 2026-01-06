@@ -1,0 +1,28 @@
+import { useEffect } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
+
+export type AdaptiveRenderManagerProps = {
+  deps: unknown[]
+  active: boolean
+  onInvalidate: (fn: () => void) => void
+}
+
+const AdaptiveRenderManager = ({ deps, active, onInvalidate }: AdaptiveRenderManagerProps) => {
+  const { invalidate } = useThree()
+
+  useEffect(() => {
+    onInvalidate(invalidate)
+  }, [invalidate, onInvalidate])
+
+  useEffect(() => {
+    invalidate()
+  }, deps)
+
+  useFrame(() => {
+    if (active) invalidate()
+  })
+
+  return null
+}
+
+export default AdaptiveRenderManager
