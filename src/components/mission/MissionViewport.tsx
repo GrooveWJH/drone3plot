@@ -31,6 +31,8 @@ export type MissionViewportProps = {
   cloudTransformEnabled: boolean
   cloudTransformMode: 'translate' | 'rotate'
   dronePose: { x: number; y: number; z: number; yaw: number | null } | null
+  isTrajectoryLocked: boolean
+  onToggleTrajectoryLock: () => void
   isTransforming: boolean
   isCloudTransforming: boolean
   onSetIsOrbiting: (value: boolean) => void
@@ -69,6 +71,8 @@ const MissionViewport = ({
   cloudTransformEnabled,
   cloudTransformMode,
   dronePose,
+  isTrajectoryLocked,
+  onToggleTrajectoryLock,
   isTransforming,
   isCloudTransforming,
   onSetIsOrbiting,
@@ -107,6 +111,22 @@ const MissionViewport = ({
   return (
     <main className="viewport">
       {cloudFileName && <div className="viewport-file">{cloudFileName}</div>}
+      <div
+        className={`trajectory-lock ${isTrajectoryLocked ? 'is-locked' : ''}`}
+        data-trajectory-lock-state
+        data-locked={isTrajectoryLocked}
+      >
+        <button
+          className="ghost with-icon trajectory-lock-button"
+          type="button"
+          onClick={onToggleTrajectoryLock}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            {isTrajectoryLocked ? 'lock' : 'lock_open'}
+          </span>
+          {isTrajectoryLocked ? '已锁定' : '锁定轨迹'}
+        </button>
+      </div>
       <Canvas
         frameloop="demand"
         camera={{ position: [12, 12, 12], fov: 45, up: [0, 0, 1] }}
@@ -230,6 +250,7 @@ const MissionViewport = ({
             index={index}
             mode={mode}
             selected={selectedId === waypoint.id}
+            isLocked={isTrajectoryLocked}
             onSelect={() => onSelectWaypoint(waypoint.id)}
             onUpdate={onUpdateWaypoint}
             onTransforming={onSetIsTransforming}

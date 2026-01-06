@@ -12,6 +12,7 @@ import { usePointCloudLoader } from '../../lib/pointcloud/src/usePointCloudLoade
 import { useSlamPose } from './hooks/useSlamPose'
 import { useTrajectoryState } from './hooks/useTrajectoryState'
 import { useWaypointsState } from './hooks/useWaypointsState'
+import { normalizeDegrees, radToDeg } from './utils'
 
 const MissionPlanner = () => {
   const orbitRef = useRef<OrbitControlsImpl | null>(null)
@@ -21,6 +22,7 @@ const MissionPlanner = () => {
   const [isCloudTransforming, setIsCloudTransforming] = useState(false)
   const [isDashboardOpen, setIsDashboardOpen] = useState(false)
   const [isMediaOpen, setIsMediaOpen] = useState(false)
+  const [isTrajectoryLocked, setIsTrajectoryLocked] = useState(false)
   const dashboardToggleRef = useRef<HTMLButtonElement | null>(null)
 
   usePerfObservers()
@@ -103,6 +105,45 @@ const MissionPlanner = () => {
     registerCloudTransform: registerTrajectoryCloudTransform,
   })
 
+  const buildTrajectoryPayload = useCallback(
+    () => ({
+      trajectory_id: trajectoryId,
+      name: trajectoryName,
+      updated_at: Date.now(),
+      points: waypoints.map((waypoint) => ({
+        x: waypoint.position[0],
+        y: waypoint.position[1],
+        z: waypoint.position[2],
+        yaw: normalizeDegrees(radToDeg(waypoint.rotation[2])),
+        takePhoto: Boolean(waypoint.takePhoto),
+      })),
+    }),
+    [trajectoryId, trajectoryName, waypoints]
+  )
+
+  useEffect(() => {
+    if (!isTrajectoryLocked) return
+    const initialPayload = buildTrajectoryPayload()
+    if (initialPayload.points.length === 0) return
+    let isActive = true
+    const sendTrajectory = () => {
+      if (!isActive) return
+      const payload = buildTrajectoryPayload()
+      if (payload.points.length === 0) return
+      fetch('/api/trajectory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch(() => {})
+    }
+    sendTrajectory()
+    const timer = window.setInterval(sendTrajectory, 1000)
+    return () => {
+      isActive = false
+      window.clearInterval(timer)
+    }
+  }, [buildTrajectoryPayload, isTrajectoryLocked])
+
   const requestRender = useCallback(() => {
     invalidateRef.current?.()
   }, [])
@@ -112,6 +153,64 @@ const MissionPlanner = () => {
       requestRender()
     }
   }, [isOrbiting, isTransforming, isCloudTransforming, requestRender])
+
+  const handleAddWaypointLocked = useCallback(() => {
+    if (isTrajectoryLocked) return
+    handleAddWaypoint()
+  }, [handleAddWaypoint, isTrajectoryLocked])
+
+  const handleDeleteWaypointLocked = useCallback(
+    (id: string) => {
+      if (isTrajectoryLocked) return
+      handleDeleteWaypoint(id)
+    },
+    [handleDeleteWaypoint, isTrajectoryLocked]
+  )
+
+  const handleReorderWaypointLocked = useCallback(
+    (id: string, direction: 'up' | 'down') => {
+      if (isTrajectoryLocked) return
+      handleReorderWaypoint(id, direction)
+    },
+    [handleReorderWaypoint, isTrajectoryLocked]
+  )
+
+  const handleUpdateWaypointLocked = useCallback(
+    (
+      id: string,
+      position: [number, number, number],
+      rotation: [number, number, number],
+      takePhoto?: boolean
+    ) => {
+      if (isTrajectoryLocked) return
+      handleUpdateWaypoint(id, position, rotation, takePhoto)
+    },
+    [handleUpdateWaypoint, isTrajectoryLocked]
+  )
+
+  const handleTogglePhotoLocked = useCallback(
+    (id: string, value: boolean) => {
+      if (isTrajectoryLocked) return
+      handleTogglePhoto(id, value)
+    },
+    [handleTogglePhoto, isTrajectoryLocked]
+  )
+
+  const handleSelectWaypointLocked = useCallback(
+    (id: string) => {
+      if (isTrajectoryLocked) return
+      handleSelectWaypointFromSidebar(id)
+    },
+    [handleSelectWaypointFromSidebar, isTrajectoryLocked]
+  )
+
+  const handleSelectWaypointSceneLocked = useCallback(
+    (id: string) => {
+      if (isTrajectoryLocked) return
+      handleSelectWaypointFromScene(id)
+    },
+    [handleSelectWaypointFromScene, isTrajectoryLocked]
+  )
 
   return (
     <div className="app-shell">
@@ -124,14 +223,14 @@ const MissionPlanner = () => {
           onFileSelect={handleFileSelect}
           onClosePointCloud={clearPointCloud}
           pointCloudFileName={pointCloudFileName}
-          onAddWaypoint={handleAddWaypoint}
+          onAddWaypoint={handleAddWaypointLocked}
           waypoints={waypoints}
           selectedId={selectedId}
-          onSelectWaypoint={handleSelectWaypointFromSidebar}
-          onDeleteWaypoint={handleDeleteWaypoint}
-          onReorderWaypoint={handleReorderWaypoint}
-          onUpdateWaypoint={handleUpdateWaypoint}
-          onTogglePhoto={handleTogglePhoto}
+          onSelectWaypoint={handleSelectWaypointLocked}
+          onDeleteWaypoint={handleDeleteWaypointLocked}
+          onReorderWaypoint={handleReorderWaypointLocked}
+          onUpdateWaypoint={handleUpdateWaypointLocked}
+          onTogglePhoto={handleTogglePhotoLocked}
           trajectoryName={trajectoryName}
           trajectoryId={trajectoryId}
           trajectoryOptions={trajectoryOptions}
@@ -149,6 +248,7 @@ const MissionPlanner = () => {
           onSetCloudTransformMode={setCloudTransformMode}
           onSetCloudRotation={onSetCloudRotation}
           onTranslateCloud={onTranslateCloud}
+          isTrajectoryLocked={isTrajectoryLocked}
         />
         <MissionViewport
           cloudFileName={cloudFileName}
@@ -166,13 +266,15 @@ const MissionPlanner = () => {
           cloudTransformEnabled={cloudTransformEnabled}
           cloudTransformMode={cloudTransformMode}
           dronePose={dronePose}
+          isTrajectoryLocked={isTrajectoryLocked}
+          onToggleTrajectoryLock={() => setIsTrajectoryLocked((prev) => !prev)}
           isTransforming={isTransforming}
           isCloudTransforming={isCloudTransforming}
           onSetIsOrbiting={setIsOrbiting}
           onSetIsTransforming={setIsTransforming}
           onSetIsCloudTransforming={setIsCloudTransforming}
-          onSelectWaypoint={handleSelectWaypointFromScene}
-          onUpdateWaypoint={handleUpdateWaypoint}
+          onSelectWaypoint={handleSelectWaypointSceneLocked}
+          onUpdateWaypoint={handleUpdateWaypointLocked}
           onPointerMissed={() => {
             if (isFocusingRef.current) return
             setSelectedId(null)

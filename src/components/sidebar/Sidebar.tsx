@@ -41,6 +41,7 @@ export type SidebarProps = {
   onSetCloudRotation: (axis: 'x' | 'y' | 'z', value: number) => void
   cloudOffset: [number, number, number]
   onTranslateCloud: (axis: 'x' | 'y' | 'z', value: number) => void
+  isTrajectoryLocked: boolean
 }
 
 const Sidebar = ({
@@ -75,6 +76,7 @@ const Sidebar = ({
   onSetCloudRotation,
   cloudOffset,
   onTranslateCloud,
+  isTrajectoryLocked,
 }: SidebarProps) => (
   <aside className="control-dock">
       <PointCloudPanel
@@ -119,6 +121,7 @@ const Sidebar = ({
       onReorderWaypoint={onReorderWaypoint}
       onUpdateWaypoint={onUpdateWaypoint}
       onTogglePhoto={onTogglePhoto}
+      isLocked={isTrajectoryLocked}
     />
   </aside>
 )

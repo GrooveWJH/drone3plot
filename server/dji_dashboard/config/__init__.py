@@ -55,6 +55,8 @@ class BaseConfig:
     SLAM_YAW_TOPIC: str = os.getenv("DJI_SLAM_YAW_TOPIC", "slam/yaw")
     SLAM_STATUS_TOPIC: str = os.getenv("DJI_SLAM_STATUS_TOPIC", "slam/status")
     SLAM_FREQUENCY_TOPIC: str = os.getenv("DJI_SLAM_FREQUENCY_TOPIC", "slam/frequency")
+    TRAJECTORY_MQTT_TOPIC: str = os.getenv("DJI_TRAJECTORY_TOPIC", "uav/trajectory")
+    TRAJECTORY_PUBLISH_RATE: float = float(os.getenv("DJI_TRAJECTORY_PUBLISH_RATE", "1"))
     TELEMETRY_POLL_HZ: float = float(os.getenv("TELEMETRY_POLL_HZ", "2"))
     SOCKET_RATE_LIMIT: float = float(os.getenv("TELEMETRY_SOCKET_RATE", "0.5"))
     POSE_SOCKET_RATE: float = float(os.getenv("POSE_SOCKET_RATE", "0.2"))

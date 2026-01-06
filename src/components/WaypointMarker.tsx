@@ -11,6 +11,7 @@ export type WaypointMarkerProps = {
   index: number
   mode: TransformMode
   selected: boolean
+  isLocked: boolean
   onSelect: () => void
   onUpdate: (id: string, position: [number, number, number], rotation: [number, number, number]) => void
   onTransforming: (value: boolean) => void
@@ -21,6 +22,7 @@ const WaypointMarker = ({
   index,
   mode,
   selected,
+  isLocked,
   onSelect,
   onUpdate,
   onTransforming,
@@ -49,13 +51,18 @@ const WaypointMarker = ({
       <TransformControls
         ref={controlsRef}
         mode={mode}
-        enabled={selected}
-        showX={selected}
-        showY={selected}
-        showZ={selected}
-        onPointerDown={() => onTransforming(true)}
-        onPointerUp={() => onTransforming(false)}
+        enabled={selected && !isLocked}
+        showX={selected && !isLocked}
+        showY={selected && !isLocked}
+        showZ={selected && !isLocked}
+        onPointerDown={() => {
+          if (!isLocked) onTransforming(true)
+        }}
+        onPointerUp={() => {
+          if (!isLocked) onTransforming(false)
+        }}
         onObjectChange={() => {
+          if (isLocked) return
           const obj = groupRef.current
           if (!obj) return
           if (mode === 'rotate') {
@@ -74,9 +81,12 @@ const WaypointMarker = ({
         position={waypoint.position}
         rotation={waypoint.rotation}
         onPointerDown={(event) => {
-          event.stopPropagation()
+          if (!isLocked) {
+            event.stopPropagation()
+          }
         }}
         onClick={(event) => {
+          if (isLocked) return
           event.stopPropagation()
           onSelect()
         }}
@@ -93,6 +103,7 @@ const WaypointMarker = ({
           <div
             className="waypoint-label"
             onClick={(event) => {
+              if (isLocked) return
               event.stopPropagation()
               onSelect()
             }}

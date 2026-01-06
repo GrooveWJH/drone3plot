@@ -3,6 +3,7 @@ import { initControlAuth } from './modules/control-auth.js';
 import { initLiveStream } from './modules/live-stream.js';
 import { initPoseStrip } from './modules/pose-strip.js';
 import { initPhotoButton } from './modules/photo.js';
+import { initTrajectoryControl } from './modules/trajectory-control.js';
 
 const blockRefreshKeys = (event) => {
   const key = event.key?.toLowerCase();
@@ -20,4 +21,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initConfigForm();
   initPoseStrip();
   initPhotoButton();
+  initTrajectoryControl();
 });

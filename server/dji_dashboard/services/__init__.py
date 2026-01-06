@@ -9,6 +9,7 @@ from .camera import CameraService
 from .control import ControlService
 from .drc import DrcControlService
 from .pose import PoseService
+from .trajectory import TrajectoryService
 from .streaming import StreamingService
 from .telemetry import TelemetryService
 
@@ -27,6 +28,7 @@ class ServiceRegistry:
         self.drc: DrcControlService | None = None
         self.pose: PoseService | None = None
         self.pose_client: MQTTClient | None = None
+        self.trajectory: TrajectoryService | None = None
         self._bootstrapped = False
         self._started = False
         self._connected = False
@@ -62,6 +64,11 @@ class ServiceRegistry:
                 self.config.get("SLAM_YAW_TOPIC"),
                 self.config.get("SLAM_STATUS_TOPIC"),
                 self.config.get("SLAM_FREQUENCY_TOPIC"),
+            )
+            self.trajectory = TrajectoryService(
+                self.mqtt_client,
+                self.config.get("TRAJECTORY_MQTT_TOPIC", "uav/trajectory"),
+                publish_rate=float(self.config.get("TRAJECTORY_PUBLISH_RATE", 1.0)),
             )
             self.drc = DrcControlService(
                 self.mqtt_client,
@@ -104,6 +111,8 @@ class ServiceRegistry:
             self.telemetry.stop()
         if self.drc:
             self.drc.shutdown()
+        if self.trajectory:
+            self.trajectory.stop()
         if self.pose_client:
             try:
                 self.pose_client.disconnect()
@@ -129,6 +138,7 @@ class ServiceRegistry:
         self.drc = None
         self.pose = None
         self.pose_client = None
+        self.trajectory = None
         self._bootstrapped = False
         self._started = False
         self._connected = False

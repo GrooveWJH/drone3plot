@@ -19,6 +19,7 @@ export type WaypointPanelProps = {
   ) => void
   onTogglePhoto: (id: string, value: boolean) => void
   onAddWaypoint: () => void
+  isLocked: boolean
 }
 
 const radToDeg = (radians: number) => (radians * 180) / Math.PI
@@ -46,6 +47,7 @@ const WaypointPanel = ({
   onUpdateWaypoint,
   onTogglePhoto,
   onAddWaypoint,
+  isLocked,
 }: WaypointPanelProps) => {
   const [drafts, setDrafts] = useState<DraftMap>({})
   const itemRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
@@ -93,7 +95,7 @@ const WaypointPanel = ({
     <section className="dock-card">
       <div className="dock-card-head">
         <h2>航点</h2>
-        <button className="primary with-icon" onClick={onAddWaypoint}>
+        <button className="primary with-icon" onClick={onAddWaypoint} disabled={isLocked}>
           <span className="material-symbols-outlined" aria-hidden="true">
             add
           </span>
@@ -108,20 +110,25 @@ const WaypointPanel = ({
             className={`waypoint-card ${selectedId === waypoint.id ? 'selected' : ''}`}
             ref={(node) => itemRefs.current.set(waypoint.id, node)}
             onPointerDown={(event) => {
+              if (isLocked) return
               const target = event.target as HTMLElement
               if (target.closest('input, button, select, textarea')) return
               onSelectWaypoint(waypoint.id)
             }}
           >
             <div className="waypoint-head">
-              <button className="ghost waypoint-index" onClick={() => onSelectWaypoint(waypoint.id)}>
+              <button
+                className="ghost waypoint-index"
+                onClick={() => onSelectWaypoint(waypoint.id)}
+                disabled={isLocked}
+              >
                 #{index + 1}
               </button>
               <div className="waypoint-actions">
                 <button
                   className="icon with-icon"
                   onClick={() => onReorderWaypoint(waypoint.id, 'up')}
-                  disabled={index === 0}
+                  disabled={index === 0 || isLocked}
                   aria-label="上移"
                 >
                   <span className="material-symbols-outlined" aria-hidden="true">
@@ -131,7 +138,7 @@ const WaypointPanel = ({
                 <button
                   className="icon with-icon"
                   onClick={() => onReorderWaypoint(waypoint.id, 'down')}
-                  disabled={index === waypoints.length - 1}
+                  disabled={index === waypoints.length - 1 || isLocked}
                   aria-label="下移"
                 >
                   <span className="material-symbols-outlined" aria-hidden="true">
@@ -147,8 +154,10 @@ const WaypointPanel = ({
                   <input
                     type="text"
                     inputMode="decimal"
+                    disabled={isLocked}
                     value={drafts[waypoint.id]?.x ?? waypoint.position[0].toFixed(2)}
                     onChange={(event) => {
+                      if (isLocked) return
                       const value = event.target.value
                       setDraft(waypoint.id, 'x', value)
                       commitNumber(value, (parsed) =>
@@ -161,6 +170,7 @@ const WaypointPanel = ({
                       )
                     }}
                     onBlur={(event) => {
+                      if (isLocked) return
                       handleBlur(
                         waypoint.id,
                         'x',
@@ -181,8 +191,10 @@ const WaypointPanel = ({
                   <input
                     type="text"
                     inputMode="decimal"
+                    disabled={isLocked}
                     value={drafts[waypoint.id]?.y ?? waypoint.position[1].toFixed(2)}
                     onChange={(event) => {
+                      if (isLocked) return
                       const value = event.target.value
                       setDraft(waypoint.id, 'y', value)
                       commitNumber(value, (parsed) =>
@@ -195,6 +207,7 @@ const WaypointPanel = ({
                       )
                     }}
                     onBlur={(event) => {
+                      if (isLocked) return
                       handleBlur(
                         waypoint.id,
                         'y',
@@ -215,8 +228,10 @@ const WaypointPanel = ({
                   <input
                     type="text"
                     inputMode="decimal"
+                    disabled={isLocked}
                     value={drafts[waypoint.id]?.z ?? waypoint.position[2].toFixed(2)}
                     onChange={(event) => {
+                      if (isLocked) return
                       const value = event.target.value
                       setDraft(waypoint.id, 'z', value)
                       commitNumber(value, (parsed) =>
@@ -229,6 +244,7 @@ const WaypointPanel = ({
                       )
                     }}
                     onBlur={(event) => {
+                      if (isLocked) return
                       handleBlur(
                         waypoint.id,
                         'z',
@@ -249,11 +265,13 @@ const WaypointPanel = ({
                   <input
                     type="text"
                     inputMode="decimal"
+                    disabled={isLocked}
                     value={
                       drafts[waypoint.id]?.yaw ??
                       normalizeDegrees(radToDeg(waypoint.rotation[2])).toFixed(1)
                     }
                     onChange={(event) => {
+                      if (isLocked) return
                       const value = event.target.value
                       setDraft(waypoint.id, 'yaw', value)
                       commitNumber(value, (parsed) => {
@@ -267,6 +285,7 @@ const WaypointPanel = ({
                       })
                     }}
                     onBlur={(event) => {
+                      if (isLocked) return
                       const raw = event.target.value
                       const committed = commitNumber(raw, (parsed) => {
                         const normalized = normalizeDegrees(parsed)
@@ -291,6 +310,7 @@ const WaypointPanel = ({
                   <input
                     type="checkbox"
                     checked={Boolean(waypoint.takePhoto)}
+                    disabled={isLocked}
                     onChange={(event) => onTogglePhoto(waypoint.id, event.target.checked)}
                   />
                   <span className="toggle-box" aria-hidden="true" />
@@ -302,6 +322,7 @@ const WaypointPanel = ({
                 <button
                   className="icon danger with-icon"
                   onClick={() => onDeleteWaypoint(waypoint.id)}
+                  disabled={isLocked}
                   aria-label="删除"
                 >
                   <span className="material-symbols-outlined" aria-hidden="true">

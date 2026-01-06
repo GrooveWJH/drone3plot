@@ -61,14 +61,22 @@
           <span class="label">YAW</span>
           <span class="value" data-pose-yaw>--</span>
         </div>
+        <div class="pose-item">
+          <span class="label">模式</span>
+          <span class="value" data-flight-mode>--</span>
+        </div>
       </div>
       <div class="feedback" data-auth-feedback></div>
       <div class="action-row">
         <button class="action-button primary with-icon" type="button" data-auth-request>
           连接并请求控制权
         </button>
+        <button class="action-button primary with-icon" type="button" data-trajectory-start>
+          <span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>
+          开始执行任务
+        </button>
         <button class="action-button ghost with-icon" type="button" data-photo-take>
-          <span class="material-symbols-outlined" aria-hidden="true">photo_camera</span>
+
           拍照
         </button>
       </div>
@@ -113,7 +121,6 @@
       <div class="feedback" data-live-feedback></div>
       <div class="action-row">
         <button class="action-button primary with-icon" type="button" data-live-start>
-          <span class="material-symbols-outlined" aria-hidden="true">play</span>
           开启直播
         </button>
         <button class="action-button ghost with-icon" type="button" data-live-stop>
@@ -122,6 +129,7 @@
         </button>
       </div>
     </article>
+
   </section>
 
   <section class="live-stage" data-live-stage>
@@ -137,7 +145,7 @@
   <div class="auth-modal" data-auth-modal aria-hidden="true">
     <div class="auth-modal-content">
       <h4>允许云端控制</h4>
-      <p class="mini-label">请在遥控器上点击允许，然后返回网页确认进入 DRC 模式。</p>
+      <p class="mini-label">请在遥控器上点击允许</p>
       <p class="mini-label" data-auth-modal-status>等待用户确认…</p>
       <div class="auth-modal-actions">
         <button class="button-primary with-icon" type="button" data-auth-confirm>

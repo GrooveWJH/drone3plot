@@ -6,10 +6,11 @@ export function initPoseStrip() {
   const zEl = document.querySelector('[data-pose-z]');
   const yawEl = document.querySelector('[data-pose-yaw]');
   const rhEl = document.querySelector('[data-relative-height]');
+  const flightModeEl = document.querySelector('[data-flight-mode]');
   let pollTimer = null;
   let pollIntervalMs = 1000;
 
-  if (!xEl || !yEl || !zEl || !yawEl || !rhEl) return;
+  if (!xEl || !yEl || !zEl || !yawEl || !rhEl || !flightModeEl) return;
 
   const reset = () => {
     xEl.textContent = '--';
@@ -17,6 +18,7 @@ export function initPoseStrip() {
     zEl.textContent = '--';
     yawEl.textContent = '--';
     rhEl.textContent = '--';
+    flightModeEl.textContent = '--';
   };
 
   const format = (value) => {
@@ -62,9 +64,13 @@ export function initPoseStrip() {
     getJSON('/api/telemetry')
       .then((payload) => {
         rhEl.textContent = format(payload?.position?.relative_altitude);
+        const modeLabel = payload?.flight?.mode_label ?? payload?.flight?.mode_code;
+        flightModeEl.textContent =
+          typeof modeLabel === 'number' ? `模式 ${modeLabel}` : modeLabel || '--';
       })
       .catch(() => {
         rhEl.textContent = '--';
+        flightModeEl.textContent = '--';
       });
   };
 
