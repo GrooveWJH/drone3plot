@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import time
 import threading
 from typing import Any, Dict, Optional
 
@@ -10,6 +11,7 @@ from pydjimqtt.core.mqtt_client import MQTTClient
 
 class PoseService:
     """Subscribe to pose/yaw topics and keep the latest payload."""
+    STALE_AFTER_SEC = 5.0
 
     def __init__(
         self,
@@ -37,6 +39,8 @@ class PoseService:
             "timestamp": None,
         }
         self._status: Optional[str] = None
+        self._last_pose_at = 0.0
+        self._last_yaw_at = 0.0
         self._original_on_message = None
         if self.pose_topic or self.yaw_topic or self.status_topic or self.frequency_topic:
             self._attach_listener()
@@ -81,6 +85,7 @@ class PoseService:
             self._pose["x"] = _to_float(x)
             self._pose["y"] = _to_float(y)
             self._pose["z"] = _to_float(z)
+            self._last_pose_at = time.monotonic()
 
     def _handle_yaw(self, raw_payload: bytes) -> None:
         try:
@@ -91,6 +96,7 @@ class PoseService:
         yaw = data.get("yaw")
         with self._lock:
             self._pose["yaw"] = _to_float(yaw)
+            self._last_yaw_at = time.monotonic()
 
     def _handle_status(self, raw_payload: bytes) -> None:
         try:
@@ -121,7 +127,18 @@ class PoseService:
     def latest(self) -> Dict[str, Optional[float] | Optional[str]]:
         with self._lock:
             payload = dict(self._pose)
-            payload["status"] = self._status
+            last_update = max(self._last_pose_at, self._last_yaw_at)
+            is_stale = (last_update == 0.0) or (
+                time.monotonic() - last_update > self.STALE_AFTER_SEC
+            )
+            if is_stale:
+                payload["x"] = None
+                payload["y"] = None
+                payload["z"] = None
+                payload["yaw"] = None
+                payload["status"] = "stale"
+            else:
+                payload["status"] = self._status
             payload["frequency"] = dict(self._frequency)
             return payload
 
