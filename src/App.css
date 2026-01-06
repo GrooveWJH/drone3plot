@@ -647,6 +647,31 @@ button:disabled {
   z-index: 2;
 }
 
+.trajectory-lock {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2;
+}
+
+.trajectory-lock-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 26, 23, 0.2);
+  background: rgba(255, 255, 255, 0.92);
+  font-weight: 600;
+  color: #5b3c2a;
+}
+
+.trajectory-lock.is-locked .trajectory-lock-button {
+  background: #e55c43;
+  border-color: #e55c43;
+  color: #fff8f0;
+}
+
 .dashboard-tab {
   padding: 0.45rem 1rem;
   border-radius: 999px;
@@ -894,14 +919,6 @@ canvas {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-@font-face {
-  font-family: 'Material Symbols Outlined';
-  font-style: normal;
-  font-weight: 100 700;
-  src: url('/fonts/material-symbols-outlined.ttf') format('truetype');
-  font-display: swap;
 }
 
 .material-symbols-outlined {
