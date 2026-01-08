@@ -11,7 +11,7 @@ from pydjimqtt.core.service_caller import ServiceCaller
 from pydjimqtt.services.commands import enter_drc_mode, request_control_auth
 from pydjimqtt.services.heartbeat import start_heartbeat, stop_heartbeat
 
-from dji_dashboard.domain.drc_state import DrcEvent, DrcState, TRANSITIONS
+from dashboard.domain.drc_state import DrcEvent, DrcState, TRANSITIONS
 
 
 class DrcControlService:

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, request
 
-from dji_dashboard.domain.models import StickCommand
+from dashboard.domain.models import StickCommand
 
 bp = Blueprint("control_api", __name__)
 

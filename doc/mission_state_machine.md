@@ -99,8 +99,8 @@ FSM --> View : state=locked
 
 ## 集成位置
 
-- `src/components/mission/state/missionStateMachine.ts`
-- `src/components/mission/MissionPlanner.tsx`
+- `apps/frontend/src/components/mission/state/missionStateMachine.ts`
+- `apps/frontend/src/components/mission/MissionPlanner.tsx`
 
 MissionPlanner 会监听 `hasPointCloud/isLoading` 并驱动状态机；所有锁定动作都由状态机处理，航点编辑逻辑统一以 `canEditWaypoints` 做 gate。
 

@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 from flask import Blueprint, current_app, jsonify, request
 
-from dji_dashboard.services import ServiceRegistry
+from dashboard.services import ServiceRegistry
 
 bp = Blueprint("trajectory_api", __name__)
 

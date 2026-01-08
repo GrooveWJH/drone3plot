@@ -64,11 +64,11 @@
 
 ## 代码链路参考
 
-- UI 入口：`src/components/sidebar/PointCloudPanel.tsx`
-- 加载逻辑：`src/components/mission/hooks/usePointCloudLoader.ts`
-- 解码逻辑：`src/lib/pointCloudLoader.ts`
-- 渲染逻辑：`src/components/PointCloudLayer.tsx`
-- 视图容器：`src/components/mission/MissionViewport.tsx`
+- UI 入口：`apps/frontend/src/components/sidebar/PointCloudPanel.tsx`
+- 加载逻辑：`apps/frontend/src/lib/pointcloud/src/usePointCloudLoader.ts`
+- 解码逻辑：`apps/frontend/src/lib/pointcloud/src/pointCloudLoader.ts`
+- 渲染逻辑：`apps/frontend/src/components/PointCloudLayer.tsx`
+- 视图容器：`apps/frontend/src/components/mission/MissionViewport.tsx`
 
 ---
 

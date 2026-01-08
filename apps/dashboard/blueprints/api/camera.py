@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, request
 
-from dji_dashboard.domain.models import ZoomCommand
+from dashboard.domain.models import ZoomCommand
 
 bp = Blueprint("camera_api", __name__)
 

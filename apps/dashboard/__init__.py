@@ -10,15 +10,15 @@ import sys
 
 from flask import Flask
 
-from dji_dashboard.blueprints.api import api_bp
-from dji_dashboard.blueprints.ui import ui_bp
-from dji_dashboard.config import CONFIG_FILE_LOADED, CONFIG_FILE_PATH, get_config
-from dji_dashboard.extensions import socketio
-from dji_dashboard.sockets.events import register_socketio_events
+from dashboard.blueprints.api import api_bp
+from dashboard.blueprints.ui import ui_bp
+from dashboard.config import CONFIG_FILE_LOADED, CONFIG_FILE_PATH, get_config
+from dashboard.extensions import socketio
+from dashboard.sockets.events import register_socketio_events
 
 
 def _inject_pydjimqtt_path() -> None:
-    project_root = Path(__file__).resolve().parents[2]
+    project_root = Path(__file__).resolve().parents[1]
     sdk_path = project_root / "thirdparty" / "pydjimqtt" / "src"
     if not sdk_path.exists():
         return
@@ -31,7 +31,7 @@ def create_app(config_name: str | None = None) -> Flask:
     """Application factory used by both CLI and WSGI servers."""
 
     _inject_pydjimqtt_path()
-    from dji_dashboard.services import ServiceRegistry
+    from dashboard.services import ServiceRegistry
     base_path = Path(__file__).resolve().parent
     app = Flask(__name__, static_folder=str(base_path / "static"),
                 template_folder=str(base_path / "templates"))
@@ -55,7 +55,7 @@ def create_app(config_name: str | None = None) -> Flask:
     atexit.register(registry.shutdown)
 
     def _auto_connect() -> None:
-        logger = logging.getLogger("dji_dashboard")
+        logger = logging.getLogger("dashboard")
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):
             try:

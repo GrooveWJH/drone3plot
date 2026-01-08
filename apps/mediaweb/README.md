@@ -27,4 +27,3 @@
 
 - `static/media_section.js`：核心渲染逻辑（增量拉取、删除、图片重试）
 - `templates/_media_section.html`：模板片段（可选）
-- `app.py`：示例 Flask Web（可删）

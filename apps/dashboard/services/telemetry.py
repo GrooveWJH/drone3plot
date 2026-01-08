@@ -7,7 +7,7 @@ from typing import Callable, List
 
 from pydjimqtt.core.mqtt_client import MQTTClient
 
-from dji_dashboard.domain.models import (
+from dashboard.domain.models import (
     CameraState,
     ConnectionState,
     FlightState,

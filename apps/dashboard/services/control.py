@@ -4,7 +4,7 @@ from __future__ import annotations
 from pydjimqtt.core.mqtt_client import MQTTClient
 from pydjimqtt.services.drc_commands import send_stick_control
 
-from dji_dashboard.domain.models import StickCommand
+from dashboard.domain.models import StickCommand
 
 
 class ControlService:

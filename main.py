@@ -5,11 +5,17 @@ from pathlib import Path
 
 project_root = Path(__file__).resolve().parent
 server_root = project_root / "server"
-sys.path.insert(0, str(server_root))
+apps_root = project_root / "apps"
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+if str(server_root) not in sys.path:
+    sys.path.insert(0, str(server_root))
+if str(apps_root) not in sys.path:
+    sys.path.insert(0, str(apps_root))
 
 from server import create_app
 from server.config import SERVER_CONFIG, apply_dashboard_env
-from dji_dashboard.extensions import socketio  # type: ignore[import-not-found]
+from dashboard.extensions import socketio  # type: ignore[import-not-found]
 
 
 def main() -> None:

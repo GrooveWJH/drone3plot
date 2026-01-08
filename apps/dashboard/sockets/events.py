@@ -4,7 +4,7 @@ from __future__ import annotations
 from flask import current_app
 from flask_socketio import SocketIO, emit
 
-from dji_dashboard.services import ServiceRegistry
+from dashboard.services import ServiceRegistry
 
 TELEMETRY_NAMESPACE = "/telemetry"
 POSE_NAMESPACE = "/pose"

@@ -4,21 +4,14 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-import sys
 from typing import Any
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
 from flask import Blueprint, Response, jsonify, render_template, request
 
-repo_root = Path(__file__).resolve().parents[1]
-repo_root_str = str(repo_root)
-if repo_root_str in sys.path:
-    sys.path.remove(repo_root_str)
-sys.path.insert(0, repo_root_str)
-
 try:
-    from mediaweb.utils.aws_sigv4 import aws_v4_headers
+    from .utils.aws_sigv4 import aws_v4_headers
 except ImportError as exc:
     raise ImportError(
         "mediaweb.utils.aws_sigv4 is required to access the media bucket."
@@ -120,7 +113,7 @@ def _resolve_db_error(db_path: str, error: Exception) -> str:
 
 
 def create_media_blueprint(config: MediaWebConfig) -> Blueprint:
-    media_root = Path(__file__).resolve().parents[1] / "mediaweb"
+    media_root = Path(__file__).resolve().parent
     bp = Blueprint(
         "media",
         __name__,

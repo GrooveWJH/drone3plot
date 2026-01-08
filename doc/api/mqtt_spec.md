@@ -345,7 +345,7 @@ v1 仅支持单个无人机对象。
 
 #### 2.3.3 单个任务轨迹请求/响应
 
-用于获取某个任务的完整轨迹数据，字段与当前源码一致（v1），参考 `public/trajectories/default_trajectory.json`，不含点云坐标转换。
+用于获取某个任务的完整轨迹数据，字段与当前源码一致（v1），参考 `apps/frontend/public/trajectories/default_trajectory.json`，不含点云坐标转换。
 
 - 请求：`yundrone/v1/mission/trajectory/request`
 - 响应：`yundrone/v1/mission/trajectory/response`

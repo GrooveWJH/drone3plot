@@ -65,7 +65,7 @@ error --> idle : RESET
 
 ## 集成位置
 
-- 后端状态机：`server/dji_dashboard/domain/drc_state.py`
-- DRC 服务：`server/dji_dashboard/services/drc.py`
-- 前端状态机：`src/components/mission/state/drcStateMachine.ts`
-- 前端轮询：`src/components/mission/hooks/useControlStatus.ts`
+- 后端状态机：`apps/dashboard/domain/drc_state.py`
+- DRC 服务：`apps/dashboard/services/drc.py`
+- 前端状态机：`apps/frontend/src/components/mission/state/drcStateMachine.ts`
+- 前端轮询：`apps/frontend/src/components/mission/hooks/useControlStatus.ts`

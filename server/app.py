@@ -4,13 +4,13 @@ from pathlib import Path
 
 from flask import Flask, abort, send_file
 
-from dji_dashboard import create_app as create_dashboard_app
-from dji_dashboard.extensions import socketio
+from dashboard import create_app as create_dashboard_app
+from dashboard.extensions import socketio
 from .config import MEDIA_CONFIG, SERVER_CONFIG, apply_dashboard_env
-from .mediaweb import MediaWebConfig, create_media_blueprint
+from mediaweb.blueprint import MediaWebConfig, create_media_blueprint
 
 
-DIST_DIR = Path(__file__).resolve().parents[1] / "dist"
+DIST_DIR = Path(__file__).resolve().parents[1] / "apps" / "frontend" / "dist"
 
 
 def create_app() -> Flask:
@@ -33,7 +33,7 @@ def create_app() -> Flask:
         if index_path.exists():
             return send_file(index_path)
         return (
-            "前端尚未构建，请先运行前端构建输出 dist/ 目录。",
+            "前端尚未构建，请先运行前端构建输出 apps/frontend/dist 目录。",
             503,
         )
 
@@ -53,7 +53,7 @@ def create_app() -> Flask:
         if index_path.exists():
             return send_file(index_path)
         return (
-            "前端尚未构建，请先运行前端构建输出 dist/ 目录。",
+            "前端尚未构建，请先运行前端构建输出 apps/frontend/dist 目录。",
             503,
         )
 

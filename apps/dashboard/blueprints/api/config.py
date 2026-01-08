@@ -5,7 +5,7 @@ from typing import Any, Callable, Mapping
 
 from flask import Blueprint, current_app, jsonify, request
 
-from dji_dashboard.services import ServiceRegistry
+from dashboard.services import ServiceRegistry
 
 bp = Blueprint("config_api", __name__)
 

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 
-from dji_dashboard import create_app
-from dji_dashboard.extensions import socketio
+from dashboard import create_app
+from dashboard.extensions import socketio
 
 from server.config import SERVER_CONFIG, apply_dashboard_env
 
