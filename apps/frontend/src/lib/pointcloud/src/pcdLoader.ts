@@ -80,7 +80,7 @@ const lzfDecompress = (input: Uint8Array, outputLength: number) => {
   while (inPos < input.length) {
     const ctrl = input[inPos++]
     if (ctrl < 32) {
-      let length = ctrl + 1
+      const length = ctrl + 1
       output.set(input.subarray(inPos, inPos + length), outPos)
       inPos += length
       outPos += length

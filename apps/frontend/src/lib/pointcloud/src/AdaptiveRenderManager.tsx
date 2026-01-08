@@ -16,7 +16,7 @@ const AdaptiveRenderManager = ({ deps, active, onInvalidate }: AdaptiveRenderMan
 
   useEffect(() => {
     invalidate()
-  }, deps)
+  }, [invalidate, deps])
 
   useFrame(() => {
     if (active) invalidate()

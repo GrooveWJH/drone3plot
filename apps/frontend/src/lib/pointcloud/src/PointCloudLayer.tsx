@@ -52,13 +52,14 @@ const PointCloudLayer = ({
   const [geometries, setGeometries] = useState<THREE.BufferGeometry[]>([])
 
   useEffect(() => {
-    setVisibleChunks(0)
+    const raf = requestAnimationFrame(() => setVisibleChunks(0))
+    return () => cancelAnimationFrame(raf)
   }, [chunkVersion])
 
   useEffect(() => {
     if (chunks.length === 0) {
-      setVisibleChunks(0)
-      return
+      const raf = requestAnimationFrame(() => setVisibleChunks(0))
+      return () => cancelAnimationFrame(raf)
     }
     let raf = 0
     const step = () => {
@@ -75,41 +76,47 @@ const PointCloudLayer = ({
   }, [chunks.length, chunkBatch, chunkVersion])
 
   useEffect(() => {
-    setGeometries((prev) => {
-      prev.forEach((geom) => geom.dispose())
-      return []
+    const raf = requestAnimationFrame(() => {
+      setGeometries((prev) => {
+        prev.forEach((geom) => geom.dispose())
+        return []
+      })
     })
+    return () => cancelAnimationFrame(raf)
   }, [chunkVersion])
 
   useEffect(() => {
     if (chunks.length === 0 || visibleChunks === 0) return
     const radius = UI_CONFIG.pointCloud.boundsRadius ?? 1000
-    setGeometries((prev) => {
-      if (prev.length >= visibleChunks) return prev
-      const next = [...prev]
-      const timingLabel = `[pointcloud]`
-      const start = performance.now()
-      for (let i = prev.length; i < visibleChunks; i += 1) {
-        const chunk = chunks[i]
-        if (!chunk) continue
-        const geom = new THREE.BufferGeometry()
-        geom.setAttribute('position', new THREE.BufferAttribute(chunk.points, 3))
-        if (chunk.colors && chunk.colors.length === chunk.points.length) {
-          geom.setAttribute('color', new THREE.BufferAttribute(chunk.colors, 3))
+    const raf = requestAnimationFrame(() => {
+      setGeometries((prev) => {
+        if (prev.length >= visibleChunks) return prev
+        const next = [...prev]
+        const timingLabel = `[pointcloud]`
+        const start = performance.now()
+        for (let i = prev.length; i < visibleChunks; i += 1) {
+          const chunk = chunks[i]
+          if (!chunk) continue
+          const geom = new THREE.BufferGeometry()
+          geom.setAttribute('position', new THREE.BufferAttribute(chunk.points, 3))
+          if (chunk.colors && chunk.colors.length === chunk.points.length) {
+            geom.setAttribute('color', new THREE.BufferAttribute(chunk.colors, 3))
+          }
+          geom.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), radius)
+          next.push(geom)
         }
-        geom.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), radius)
-        next.push(geom)
-      }
-      const now = performance.now()
-      const duration = now - start
-      const delta = lastGeometryLogAt ? now - lastGeometryLogAt : 0
-      lastGeometryLogAt = now
-      const timestamp = new Date().toISOString()
-      console.log(
-        `${timingLabel} ${timestamp} geometry: ${duration.toFixed(7)}ms (+${delta.toFixed(7)}ms)`
-      )
-      return next
+        const now = performance.now()
+        const duration = now - start
+        const delta = lastGeometryLogAt ? now - lastGeometryLogAt : 0
+        lastGeometryLogAt = now
+        const timestamp = new Date().toISOString()
+        console.log(
+          `${timingLabel} ${timestamp} geometry: ${duration.toFixed(7)}ms (+${delta.toFixed(7)}ms)`
+        )
+        return next
+      })
     })
+    return () => cancelAnimationFrame(raf)
   }, [chunks, visibleChunks])
 
   useEffect(

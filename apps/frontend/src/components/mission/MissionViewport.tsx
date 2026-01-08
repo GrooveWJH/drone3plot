@@ -90,9 +90,17 @@ const MissionViewport = ({
   orbitRef,
 }: MissionViewportProps) => {
   const [fps, setFps] = useState<number | null>(null)
+  const [cloudGroupObject, setCloudGroupObject] = useState<Group | null>(null)
   const handleFps = useCallback((value: number) => {
     setFps(value)
   }, [])
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      setCloudGroupObject(cloudGroupRef.current ?? null)
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [cloudGroupRef, pointCloud, pointCloudChunks.length])
 
   useEffect(() => {
     if (!pointCloud && pointCloudChunks.length === 0) return undefined
@@ -214,7 +222,7 @@ const MissionViewport = ({
         {cloudTransformEnabled && (
           <TransformControls
             mode={cloudTransformMode}
-            object={cloudGroupRef.current ?? undefined}
+            object={cloudGroupObject ?? undefined}
             onPointerDown={() => onSetIsCloudTransforming(true)}
             onPointerUp={() => onSetIsCloudTransforming(false)}
             onObjectChange={onCloudObjectChange}
@@ -289,10 +297,14 @@ type FpsTrackerProps = {
 }
 
 const FpsTracker = ({ onFps }: FpsTrackerProps) => {
-  const lastSampleRef = useRef(performance.now())
+  const lastSampleRef = useRef<number | null>(null)
   const frameCountRef = useRef(0)
 
   useFrame(() => {
+    if (lastSampleRef.current === null) {
+      lastSampleRef.current = performance.now()
+      return
+    }
     frameCountRef.current += 1
     const now = performance.now()
     const elapsed = now - lastSampleRef.current

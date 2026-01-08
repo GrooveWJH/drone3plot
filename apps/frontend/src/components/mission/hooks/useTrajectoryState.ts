@@ -34,13 +34,17 @@ export const useTrajectoryState = ({
   cloudOffset,
   registerCloudTransform,
 }: UseTrajectoryStateParams) => {
-  const [trajectoryId, setTrajectoryId] = useState<string>(() => {
-    if (typeof window === 'undefined') return TRAJECTORY_SOURCES[0]?.id ?? 'default'
+  const initialOptions = getTrajectoryOptions(TRAJECTORY_SOURCES)
+  const initialTrajectoryId = (() => {
+    if (typeof window === 'undefined') return initialOptions[0]?.id ?? 'default'
     const cached = window.localStorage.getItem(TRAJECTORY_ID_STORAGE_KEY)
-    return cached || TRAJECTORY_SOURCES[0]?.id || 'default'
-  })
+    if (cached && initialOptions.some((item) => item.id === cached)) return cached
+    return findFallbackTrajectoryId(TRAJECTORY_SOURCES, initialOptions)
+  })()
+
+  const [trajectoryId, setTrajectoryId] = useState<string>(initialTrajectoryId)
   const [trajectoryName, setTrajectoryName] = useState<string>('新轨迹')
-  const [trajectoryOptions, setTrajectoryOptions] = useState<TrajectoryMeta[]>([])
+  const [trajectoryOptions, setTrajectoryOptions] = useState<TrajectoryMeta[]>(initialOptions)
 
   const hydrateWaypoints = useCallback(
     (trajectory: TrajectoryFile) => {
@@ -88,25 +92,22 @@ export const useTrajectoryState = ({
   )
 
   const refreshTrajectoryOptions = useCallback(() => {
-    setTrajectoryOptions(getTrajectoryOptions(TRAJECTORY_SOURCES))
-  }, [])
-
-  useEffect(() => {
-    refreshTrajectoryOptions()
-  }, [refreshTrajectoryOptions])
-
-  useEffect(() => {
-    if (trajectoryOptions.length > 0) {
-      const exists = trajectoryOptions.some((item) => item.id === trajectoryId)
-      if (!exists) {
-        const fallback = findFallbackTrajectoryId(TRAJECTORY_SOURCES, trajectoryOptions)
-        setTrajectoryId(fallback)
-        window.localStorage.setItem(TRAJECTORY_ID_STORAGE_KEY, fallback)
-        void loadTrajectory(fallback)
-        return
-      }
-      void loadTrajectory(trajectoryId)
+    const nextOptions = getTrajectoryOptions(TRAJECTORY_SOURCES)
+    setTrajectoryOptions(nextOptions)
+    if (!nextOptions.some((item) => item.id === trajectoryId)) {
+      const fallback = findFallbackTrajectoryId(TRAJECTORY_SOURCES, nextOptions)
+      setTrajectoryId(fallback)
+      window.localStorage.setItem(TRAJECTORY_ID_STORAGE_KEY, fallback)
+      void loadTrajectory(fallback)
     }
+  }, [loadTrajectory, trajectoryId])
+
+  useEffect(() => {
+    if (trajectoryOptions.length === 0) return
+    const raf = requestAnimationFrame(() => {
+      void loadTrajectory(trajectoryId)
+    })
+    return () => cancelAnimationFrame(raf)
   }, [loadTrajectory, trajectoryId, trajectoryOptions.length])
 
   const buildTrajectoryPayload = useCallback((): TrajectoryFile => {

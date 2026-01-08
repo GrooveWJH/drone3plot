@@ -64,8 +64,9 @@ const WaypointPanel = ({
       const entry = { ...(prev[id] ?? {}) }
       delete entry[field]
       if (Object.keys(entry).length === 0) {
-        const { [id]: _removed, ...rest } = prev
-        return rest
+        const next = { ...prev }
+        delete next[id]
+        return next
       }
       return { ...prev, [id]: entry }
     })

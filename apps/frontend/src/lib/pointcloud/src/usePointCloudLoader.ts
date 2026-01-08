@@ -320,7 +320,6 @@ export const usePointCloudLoader = ({
       pointCloudChunks.length,
       chunkSize,
       computeHash,
-      onResetCloudTransform,
       flushChunks,
     ]
   )
