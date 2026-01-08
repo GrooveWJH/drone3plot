@@ -39,3 +39,4 @@ __pycache__/
 .claude/
 videostream/mediamtx
 videostream/mediamtx.exe
+*.pdf
