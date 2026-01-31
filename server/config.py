@@ -6,7 +6,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class DashboardConfig:
-    gateway_sn: str = "9N9CN2B00121JN"
+    # gateway_sn: str = "9N9CN2B00121JN"
+    gateway_sn: str = "9N9CN2J0012CXY"
     mqtt_host: str = "127.0.0.1"
     mqtt_port: int = 1883
     mqtt_username: str = "admin"
