@@ -1,0 +1,83 @@
+"""Pose data listener for slam/position MQTT messages."""
+from __future__ import annotations
+
+import json
+import threading
+from typing import Any, Dict, Optional
+
+from pydjimqtt.core.mqtt_client import MQTTClient
+
+
+class PoseService:
+    """Subscribe to pose/yaw topics and keep the latest payload."""
+
+    def __init__(self, client: MQTTClient, pose_topic: str | None, yaw_topic: str | None) -> None:
+        self.client = client
+        self.pose_topic = (pose_topic or "").strip()
+        self.yaw_topic = (yaw_topic or "").strip()
+        self._lock = threading.Lock()
+        self._pose: Dict[str, Optional[float]] = {
+            "x": None,
+            "y": None,
+            "z": None,
+            "yaw": None,
+        }
+        self._original_on_message = None
+        if self.pose_topic or self.yaw_topic:
+            self._attach_listener()
+
+    def _attach_listener(self) -> None:
+        if not self.client.client:
+            return
+        self._original_on_message = self.client.client.on_message
+
+        def on_message(client, userdata, msg):
+            if self.pose_topic and msg.topic == self.pose_topic:
+                self._handle_pose(msg.payload)
+            if self.yaw_topic and msg.topic == self.yaw_topic:
+                self._handle_yaw(msg.payload)
+            if self._original_on_message:
+                self._original_on_message(client, userdata, msg)
+
+        self.client.client.on_message = on_message
+        if self.pose_topic:
+            self.client.client.subscribe(self.pose_topic, qos=0)
+        if self.yaw_topic:
+            self.client.client.subscribe(self.yaw_topic, qos=0)
+
+    def _handle_pose(self, raw_payload: bytes) -> None:
+        try:
+            payload = json.loads(raw_payload.decode())
+        except Exception:
+            return
+        data: Dict[str, Any] = payload.get("data", payload)
+        x = data.get("x")
+        y = data.get("y")
+        z = data.get("z")
+        with self._lock:
+            self._pose["x"] = _to_float(x)
+            self._pose["y"] = _to_float(y)
+            self._pose["z"] = _to_float(z)
+
+    def _handle_yaw(self, raw_payload: bytes) -> None:
+        try:
+            payload = json.loads(raw_payload.decode())
+        except Exception:
+            return
+        data: Dict[str, Any] = payload.get("data", payload)
+        yaw = data.get("yaw")
+        with self._lock:
+            self._pose["yaw"] = _to_float(yaw)
+
+    def latest(self) -> Dict[str, Optional[float]]:
+        with self._lock:
+            return dict(self._pose)
+
+
+def _to_float(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None

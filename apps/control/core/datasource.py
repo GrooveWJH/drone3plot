@@ -9,7 +9,7 @@ from typing import Optional, Tuple
 
 from pydjimqtt.core.mqtt_client import MQTTClient
 
-from dashboard.services.pose import PoseService
+from .pose_service import PoseService
 
 
 class DataSource(ABC):
