@@ -17,14 +17,25 @@
 from __future__ import annotations
 
 import time
+import sys
+from pathlib import Path
 from typing import Optional
 
-from pydjimqtt import MQTTClient, send_stick_control
-from rich.console import Console
-from rich.panel import Panel
+if __package__ is None:
+    project_root = Path(__file__).resolve().parents[2]
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
 
-from dashboard.services.pose import PoseService
-from apps.control.config import (
+from apps.control.bootstrap import ensure_pydjimqtt
+
+ensure_pydjimqtt()
+
+from pydjimqtt import MQTTClient, send_stick_control  # noqa: E402
+from rich.console import Console  # noqa: E402
+from rich.panel import Panel  # noqa: E402
+
+from apps.control.core.pose_service import PoseService  # noqa: E402
+from apps.control.config import (  # noqa: E402
     GATEWAY_SN,
     MQTT_CONFIG,
     SLAM_POSE_TOPIC,
@@ -43,8 +54,8 @@ from apps.control.config import (
     VERTICAL_ARRIVAL_STABLE_TIME,
     ENABLE_DATA_LOGGING,
 )
-from apps.control.core.pid import PIDController
-from apps.control.io.logger import DataLogger
+from apps.control.core.pid import PIDController  # noqa: E402
+from apps.control.io.logger import DataLogger  # noqa: E402
 
 def _clamp(value: float, min_value: int, max_value: int) -> int:
     return int(max(min_value, min(max_value, value)))

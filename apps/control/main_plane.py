@@ -26,15 +26,28 @@
 import time
 import random
 import math
+import sys
+from dataclasses import dataclass
+from pathlib import Path
 
-from pydjimqtt import MQTTClient, start_heartbeat, stop_heartbeat, send_stick_control
-from rich.console import Console
-from rich.panel import Panel
+if __package__ is None:
+    project_root = Path(__file__).resolve().parents[2]
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
 
-from apps.control import config as cfg
-from apps.control.core.controller import PlaneController
-from apps.control.core.datasource import create_datasource
-from apps.control.io.logger import DataLogger
+from apps.control.bootstrap import ensure_pydjimqtt
+
+ensure_pydjimqtt()
+
+from pydjimqtt import MQTTClient, send_stick_control, start_heartbeat, stop_heartbeat  # noqa: E402
+from rich.console import Console  # noqa: E402
+from rich.panel import Panel  # noqa: E402
+
+from apps.control import config as cfg  # noqa: E402
+from apps.control.core.controller import PlaneController  # noqa: E402
+from apps.control.core.datasource import create_datasource  # noqa: E402
+from apps.control.core.plane_logic import PlaneControlState, plane_control_step  # noqa: E402
+from apps.control.io.logger import DataLogger  # noqa: E402
 
 
 def generate_random_waypoint(
@@ -70,6 +83,49 @@ def generate_random_waypoint(
     return (current_x, current_y)
 
 
+@dataclass
+class ControlState:
+    reached: bool = False
+    in_tolerance_since: float | None = None
+    control_start_time: float = 0.0
+    loop_count: int = 0
+    plane_state: str = "approach"
+    brake_started_at: float | None = None
+    brake_count: int = 0
+    settle_started_at: float | None = None
+
+
+def reset_state_for_new_waypoint(state: ControlState) -> None:
+    state.reached = False
+    state.in_tolerance_since = None
+    state.control_start_time = time.time()
+    state.loop_count = 0
+    state.plane_state = "approach"
+    state.brake_started_at = None
+    state.brake_count = 0
+    state.settle_started_at = None
+
+
+def update_stability_timer(
+    *,
+    in_range: bool,
+    in_tolerance_since: float | None,
+    now: float,
+    console: Console,
+    enter_message: str,
+    exit_message: str,
+    suppress_exit_log: bool = False,
+) -> tuple[float | None, float | None]:
+    if in_range:
+        if in_tolerance_since is None:
+            console.print(enter_message)
+            return now, 0.0
+        return in_tolerance_since, now - in_tolerance_since
+    if in_tolerance_since is not None and not suppress_exit_log:
+        console.print(exit_message)
+    return None, None
+
+
 def main():
     console = Console()
 
@@ -95,6 +151,7 @@ def main():
     if gain_scheduling_enabled:
         features.append(
             f"[green]增益调度[/green] (远:{gain_scheduling_cfg['distance_far']}m, 近:{gain_scheduling_cfg['distance_near']}m)")
+    features.append("[green]三段控制[/green] (APPROACH → BRAKE → SETTLE)")
     features_info = " | ".join(features) if features else "[dim]基础PID控制[/dim]"
 
     # 显示数据源配置
@@ -122,6 +179,7 @@ def main():
         console.print(f"[red]✗ MQTT连接失败: {e}[/red]")
         return 1
 
+
     # 2. 启动心跳
     console.print("\n[cyan]━━━ 步骤 2/2: 启动心跳 ━━━[/cyan]")
     heartbeat_thread = start_heartbeat(mqtt_client, interval=0.2)
@@ -140,18 +198,26 @@ def main():
         return 1
 
     # 4. 初始化控制器和航点
-    controller = PlaneController(
+    approach_controller = PlaneController(
         cfg.KP_XY, cfg.KI_XY, cfg.KD_XY,
         cfg.MAX_STICK_OUTPUT,
         enable_gain_scheduling=gain_scheduling_enabled,
         gain_schedule_profile=gain_scheduling_cfg.get('profile'),
         d_filter_alpha=cfg.PLANE_D_FILTER_ALPHA,
     )
+    settle_controller = PlaneController(
+        cfg.PLANE_SETTLE_KP,
+        cfg.PLANE_SETTLE_KI,
+        cfg.PLANE_SETTLE_KD,
+        cfg.MAX_STICK_OUTPUT,
+        enable_gain_scheduling=False,
+        d_filter_alpha=cfg.PLANE_D_FILTER_ALPHA,
+    )
 
     # 应用配置的增益调度参数
     if gain_scheduling_enabled:
-        controller.distance_far = gain_scheduling_cfg['distance_far']
-        controller.distance_near = gain_scheduling_cfg['distance_near']
+        approach_controller.distance_far = gain_scheduling_cfg['distance_far']
+        approach_controller.distance_near = gain_scheduling_cfg['distance_near']
 
     # 初始化航点
     if cfg.PLANE_USE_RANDOM_WAYPOINTS:
@@ -189,15 +255,19 @@ def main():
 
     # 控制循环
     control_interval = 1.0 / cfg.CONTROL_FREQUENCY
-    reached = False
-    in_tolerance_since = None  # 记录进入阈值范围的时间戳
-    control_start_time = time.time()  # 记录开始控制的时间
-    loop_count = 0  # 循环计数器
+    state = ControlState(control_start_time=time.time())
+    plane_state = PlaneControlState()
 
     try:
         while True:
             loop_start = time.time()
-            loop_count += 1
+            current_time = loop_start
+            state.loop_count += 1
+            roll_offset = 0.0
+            pitch_offset = 0.0
+            roll = cfg.NEUTRAL
+            pitch = cfg.NEUTRAL
+            pid_components = {'x': (0.0, 0.0, 0.0), 'y': (0.0, 0.0, 0.0)}
 
             # 读取位置数据（使用统一数据源接口）
             position = datasource.get_position()
@@ -213,9 +283,10 @@ def main():
 
             yaw_for_control = 0.0 if abs(
                 current_yaw) <= cfg.YAW_ZERO_THRESHOLD_DEG else current_yaw
+            # 假设 SLAM yaw 为顺时针为正（0°=正北, 90°=正东）
             yaw_rad = math.radians(yaw_for_control)
             target_x, target_y = target_waypoint
-            distance = controller.get_distance(
+            distance = approach_controller.get_distance(
                 target_x, target_y, current_x, current_y)
 
             # 世界坐标误差 -> 机体系误差（FLU）
@@ -227,113 +298,138 @@ def main():
                                      math.cos(yaw_rad) * error_y_world
 
             # 判断是否到达（带时间稳定性检查）
-            if not reached:
-                if distance < cfg.TOLERANCE_XY:
-                    # 进入阈值范围
-                    if in_tolerance_since is None:
-                        in_tolerance_since = time.time()
+            if not state.reached and state.plane_state in {"approach", "brake", "settle"}:
+                state.in_tolerance_since, stable_duration = update_stability_timer(
+                    in_range=distance < cfg.TOLERANCE_XY,
+                    in_tolerance_since=state.in_tolerance_since,
+                    now=current_time,
+                    console=console,
+                    enter_message=(
+                        f"[yellow]⏱ 进入阈值范围 (距离:{distance*100:.2f}cm)，等待稳定 {cfg.PLANE_ARRIVAL_STABLE_TIME}s...[/yellow]"
+                    ),
+                    exit_message=(
+                        f"[yellow]✗ 偏离目标 (距离:{distance*100:.2f}cm)，重置稳定计时[/yellow]"
+                    ),
+                    suppress_exit_log=(state.plane_state == "brake"),
+                )
+                if stable_duration is not None:
+                    brake_cooldown_ok = True
+                    if state.plane_state == "brake" and state.brake_started_at is not None:
+                        brake_cooldown_ok = (current_time - state.brake_started_at) >= cfg.PLANE_BRAKE_HOLD_TIME
+                    if brake_cooldown_ok and stable_duration >= cfg.PLANE_ARRIVAL_STABLE_TIME:
+                        # 真正到达！
+                        total_control_time = time.time() - state.control_start_time
+
+                        # 计算下一个航点
+                        if cfg.PLANE_USE_RANDOM_WAYPOINTS:
+                            next_index = waypoint_index + 1
+                            step_index = next_index
+                            if cfg.PLANE_RANDOM_ONLY_FAR:
+                                min_distance = cfg.PLANE_RANDOM_FAR_DISTANCE
+                                max_distance = None
+                            elif step_index % 2 == 1:
+                                min_distance = cfg.PLANE_RANDOM_NEAR_DISTANCE
+                                max_distance = cfg.PLANE_RANDOM_NEAR_DISTANCE_MAX
+                            else:
+                                min_distance = cfg.PLANE_RANDOM_FAR_DISTANCE
+                                max_distance = None
+                            next_waypoint = generate_random_waypoint(
+                                current_x,
+                                current_y,
+                                bound=cfg.PLANE_RANDOM_BOUND,
+                                min_distance=min_distance,
+                                max_distance=max_distance,
+                            )
+                            waypoint_desc = f"随机航点{next_index}"
+                        else:
+                            next_index = (waypoint_index + 1) % len(cfg.WAYPOINTS)
+                            next_waypoint = cfg.WAYPOINTS[next_index]
+                            waypoint_desc = f"航点{next_index}"
+
                         console.print(
-                            f"[yellow]⏱ 进入阈值范围 (距离:{distance*100:.2f}cm)，等待稳定 {cfg.PLANE_ARRIVAL_STABLE_TIME}s...[/yellow]")
-                    else:
-                        # 检查是否已稳定足够时间
-                        stable_duration = time.time() - in_tolerance_since
-                        if stable_duration >= cfg.PLANE_ARRIVAL_STABLE_TIME:
-                            # 真正到达！
-                            total_control_time = time.time() - control_start_time
+                            f"\n[bold green]✓ 已到达航点{waypoint_index} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m！[/bold green]"
+                        )
+                        console.print(
+                            f"[dim]最终距离: {distance*100:.2f} cm | 稳定时长: {stable_duration:.2f}s | 控制用时: {total_control_time:.2f}s[/dim]"
+                        )
 
-                            # 计算下一个航点
-                            if cfg.PLANE_USE_RANDOM_WAYPOINTS:
-                                next_index = waypoint_index + 1
-                                step_index = next_index
-                                if step_index % 2 == 1:
-                                    min_distance = cfg.PLANE_RANDOM_NEAR_DISTANCE
-                                    max_distance = cfg.PLANE_RANDOM_NEAR_DISTANCE_MAX
-                                else:
-                                    min_distance = cfg.PLANE_RANDOM_FAR_DISTANCE
-                                    max_distance = None
-                                next_waypoint = generate_random_waypoint(
-                                    current_x,
-                                    current_y,
-                                    bound=cfg.PLANE_RANDOM_BOUND,
-                                    min_distance=min_distance,
-                                    max_distance=max_distance,
-                                )
-                                waypoint_desc = f"随机航点{next_index}"
-                            else:
-                                next_index = (waypoint_index + 1) % len(cfg.WAYPOINTS)
-                                next_waypoint = cfg.WAYPOINTS[next_index]
-                                waypoint_desc = f"航点{next_index}"
+                        if cfg.PLANE_AUTO_NEXT_WAYPOINT:
+                            console.print(
+                                f"[cyan]自动切换 → {waypoint_desc} - ({next_waypoint[0]:.2f}, {next_waypoint[1]:.2f})m (按Ctrl+C退出)[/cyan]\n"
+                            )
+                        else:
+                            console.print(
+                                f"[yellow]按 Enter 前往 {waypoint_desc} - ({next_waypoint[0]:.2f}, {next_waypoint[1]:.2f})m，或Ctrl+C退出...[/yellow]\n"
+                            )
 
-                            console.print(f"\n[bold green]✓ 已到达航点{waypoint_index} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m！[/bold green]")
-                            console.print(f"[dim]最终距离: {distance*100:.2f} cm | 稳定时长: {stable_duration:.2f}s | 控制用时: {total_control_time:.2f}s[/dim]")
+                        # 悬停并重置PID
+                        for _ in range(5):
+                            send_stick_control(mqtt_client)
+                            time.sleep(0.01)
+                        approach_controller.reset()
+                        settle_controller.reset()
+                        state.reached = True
+                        state.in_tolerance_since = None
 
-                            if cfg.PLANE_AUTO_NEXT_WAYPOINT:
-                                console.print(f"[cyan]自动切换 → {waypoint_desc} - ({next_waypoint[0]:.2f}, {next_waypoint[1]:.2f})m (按Ctrl+C退出)[/cyan]\n")
-                            else:
-                                console.print(f"[yellow]按 Enter 前往 {waypoint_desc} - ({next_waypoint[0]:.2f}, {next_waypoint[1]:.2f})m，或Ctrl+C退出...[/yellow]\n")
-
-                            # 悬停并重置PID
-                            for _ in range(5):
-                                send_stick_control(mqtt_client)
-                                time.sleep(0.01)
-                            controller.reset()
-                            reached = True
-                            in_tolerance_since = None
-
-                            # 根据模式决定是否等待用户输入
-                            if cfg.PLANE_AUTO_NEXT_WAYPOINT:
-                                # 自动模式：直接切换
+                        # 根据模式决定是否等待用户输入
+                        if cfg.PLANE_AUTO_NEXT_WAYPOINT:
+                            # 自动模式：直接切换
+                            waypoint_index = next_index
+                            target_waypoint = next_waypoint
+                            console.print(
+                                f"[bold cyan]→ {waypoint_desc} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m[/bold cyan]\n"
+                            )
+                            reset_state_for_new_waypoint(state)
+                        else:
+                            # 手动模式：等待键盘输入
+                            try:
+                                input()
                                 waypoint_index = next_index
                                 target_waypoint = next_waypoint
-                                console.print(f"[bold cyan]→ {waypoint_desc} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m[/bold cyan]\n")
-                                reached = False
-                                control_start_time = time.time()
-                                loop_count = 0
-                            else:
-                                # 手动模式：等待键盘输入
-                                try:
-                                    input()
-                                    waypoint_index = next_index
-                                    target_waypoint = next_waypoint
-                                    console.print(f"[bold cyan]切换目标 → {waypoint_desc} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m[/bold cyan]\n")
-                                    reached = False
-                                    control_start_time = time.time()
-                                    loop_count = 0
-                                except KeyboardInterrupt:
-                                    break
-                            continue
-                else:
-                    # 离开阈值范围，重置计时器
-                    if in_tolerance_since is not None:
-                        console.print(f"[yellow]✗ 偏离目标 (距离:{distance*100:.2f}cm)，重置稳定计时[/yellow]")
-                        in_tolerance_since = None
+                                console.print(
+                                    f"[bold cyan]切换目标 → {waypoint_desc} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m[/bold cyan]\n"
+                                )
+                                reset_state_for_new_waypoint(state)
+                            except KeyboardInterrupt:
+                                break
+                        continue
+            plane_state.plane_state = state.plane_state
+            plane_state.brake_started_at = state.brake_started_at
+            plane_state.brake_count = state.brake_count
+            plane_state.settle_started_at = state.settle_started_at
 
-                # PID计算并发送控制指令
-                current_time = time.time()
-                roll_offset, pitch_offset, pid_components = controller.compute(
-                    error_x_body, error_y_body,
-                    0.0, 0.0,
-                    current_time
-                )
+            roll_offset, pitch_offset, pid_components, roll, pitch = plane_control_step(
+                plane_state,
+                cfg,
+                approach_controller,
+                settle_controller,
+                error_x_body,
+                error_y_body,
+                distance,
+                mqtt_client,
+                current_time,
+            )
 
-                roll = int(cfg.NEUTRAL + roll_offset)
-                pitch = int(cfg.NEUTRAL + pitch_offset)
-                send_stick_control(mqtt_client, roll=roll, pitch=pitch)
+            state.plane_state = plane_state.plane_state
+            state.brake_started_at = plane_state.brake_started_at
+            state.brake_count = plane_state.brake_count
+            state.settle_started_at = plane_state.settle_started_at
 
             # 每10次循环打印详细信息
-            if loop_count % 2 == 0:
+            if state.loop_count % 2 == 0:
                 error_x = target_x - current_x
                 error_y = target_y - current_y
-                kp_scale = controller.x_pid.kp / controller.kp_base if gain_scheduling_enabled else 1.0
-                kd_scale = controller.x_pid.kd / controller.kd_base if gain_scheduling_enabled else 1.0
+                kp_scale = approach_controller.x_pid.kp / approach_controller.kp_base if gain_scheduling_enabled else 1.0
+                kd_scale = approach_controller.x_pid.kd / approach_controller.kd_base if gain_scheduling_enabled else 1.0
                 info_parts = [
-                    f"[cyan]#{loop_count:04d}[/cyan]",
+                    f"[cyan]#{state.loop_count:04d}[/cyan]",
                     f"WP{waypoint_index}",
                     f"目标({target_x:+.2f},{target_y:+.2f})",
                     f"当前({current_x:+.2f},{current_y:+.2f})",
-                    f"距{distance*100:5.1f}cm"
+                    f"距{distance*100:5.1f}cm",
+                    f"阶段:{state.plane_state.upper()}"
                 ]
-                if gain_scheduling_enabled:
+                if gain_scheduling_enabled and state.plane_state == "approach":
                     info_parts.append(f"[yellow]Kp×{kp_scale:.2f} Kd×{kd_scale:.2f}[/yellow]")
 
                 info_parts.append(f"Out:P{pitch_offset:+5.0f}/R{roll_offset:+5.0f}")

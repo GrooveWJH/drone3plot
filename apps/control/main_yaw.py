@@ -22,15 +22,27 @@ Yaw角PID控制器 - 主程序
 
 import time
 import random
+import sys
+from pathlib import Path
 
-from pydjimqtt import MQTTClient, start_heartbeat, stop_heartbeat, send_stick_control
-from rich.console import Console
-from rich.panel import Panel
+if __package__ is None:
+    project_root = Path(__file__).resolve().parents[2]
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
 
-from apps.control import config as cfg
-from apps.control.core.controller import YawOnlyController, get_yaw_error
-from apps.control.core.datasource import create_datasource
-from apps.control.io.logger import DataLogger
+from apps.control.bootstrap import ensure_pydjimqtt
+
+ensure_pydjimqtt()
+
+from pydjimqtt import MQTTClient, start_heartbeat, stop_heartbeat, send_stick_control  # noqa: E402
+from rich.console import Console  # noqa: E402
+from rich.panel import Panel  # noqa: E402
+
+from apps.control import config as cfg  # noqa: E402
+from apps.control.core.controller import YawOnlyController, get_yaw_error  # noqa: E402
+from apps.control.core.datasource import create_datasource  # noqa: E402
+from apps.control.core.yaw_logic import yaw_control_step  # noqa: E402
+from apps.control.io.logger import DataLogger  # noqa: E402
 
 
 def generate_random_angle(current_angle, min_diff=30):
@@ -51,6 +63,26 @@ def generate_random_angle(current_angle, min_diff=30):
         angle_diff = abs(get_yaw_error(new_angle, current_angle))
         if angle_diff >= min_diff:
             return new_angle
+
+
+def update_stability_timer(
+    *,
+    in_range: bool,
+    in_tolerance_since: float | None,
+    now: float,
+    console: Console,
+    enter_message: str,
+    exit_message: str,
+    suppress_exit_log: bool = False,
+) -> tuple[float | None, float | None]:
+    if in_range:
+        if in_tolerance_since is None:
+            console.print(enter_message)
+            return now, None
+        return in_tolerance_since, now - in_tolerance_since
+    if in_tolerance_since is not None and not suppress_exit_log:
+        console.print(exit_message)
+    return None, None
 
 
 def main():
@@ -158,80 +190,78 @@ def main():
 
             # 判断是否到达（带时间稳定性检查）
             if not reached:
-                if abs_error < cfg.TOLERANCE_YAW:
-                    # 进入阈值范围
-                    if in_tolerance_since is None:
-                        in_tolerance_since = time.time()
-                        console.print(f"[yellow]⏱ 进入阈值范围 (误差:{error_yaw:+.2f}°)，等待稳定 {cfg.YAW_ARRIVAL_STABLE_TIME}s...[/yellow]")
+                in_tolerance_since, stable_duration = update_stability_timer(
+                    in_range=abs_error < cfg.TOLERANCE_YAW,
+                    in_tolerance_since=in_tolerance_since,
+                    now=loop_start,
+                    console=console,
+                    enter_message=(
+                        f"[yellow]⏱ 进入阈值范围 (误差:{error_yaw:+.2f}°)，等待稳定 {cfg.YAW_ARRIVAL_STABLE_TIME}s...[/yellow]"
+                    ),
+                    exit_message=(
+                        f"[yellow]✗ 偏离目标 (误差:{error_yaw:+.2f}°)，重置稳定计时[/yellow]"
+                    ),
+                )
+                if stable_duration is not None and stable_duration >= cfg.YAW_ARRIVAL_STABLE_TIME:
+                    # 真正到达！
+                    total_control_time = time.time() - control_start_time
+
+                    # 计算下一个目标
+                    if cfg.USE_RANDOM_ANGLES:
+                        next_target = generate_random_angle(target_yaw, cfg.RANDOM_ANGLE_MIN_DIFF)
+                        next_index = target_index + 1
+                        target_desc = f"随机目标{next_index}"
                     else:
-                        # 检查是否已稳定足够时间
-                        stable_duration = time.time() - in_tolerance_since
-                        if stable_duration >= cfg.YAW_ARRIVAL_STABLE_TIME:
-                            # 真正到达！
-                            total_control_time = time.time() - control_start_time
+                        next_index = (target_index + 1) % len(cfg.TARGET_YAWS)
+                        next_target = cfg.TARGET_YAWS[next_index]
+                        target_desc = f"目标{next_index}"
 
-                            # 计算下一个目标
-                            if cfg.USE_RANDOM_ANGLES:
-                                next_target = generate_random_angle(target_yaw, cfg.RANDOM_ANGLE_MIN_DIFF)
-                                next_index = target_index + 1
-                                target_desc = f"随机目标{next_index}"
-                            else:
-                                next_index = (target_index + 1) % len(cfg.TARGET_YAWS)
-                                next_target = cfg.TARGET_YAWS[next_index]
-                                target_desc = f"目标{next_index}"
+                    console.print(f"\n[bold green]✓ 已到达目标{target_index} - {target_yaw:.1f}°！[/bold green]")
+                    console.print(f"[dim]最终误差: {error_yaw:+.2f}° | 稳定时长: {stable_duration:.2f}s | 控制用时: {total_control_time:.2f}s[/dim]")
 
-                            console.print(f"\n[bold green]✓ 已到达目标{target_index} - {target_yaw:.1f}°！[/bold green]")
-                            console.print(f"[dim]最终误差: {error_yaw:+.2f}° | 稳定时长: {stable_duration:.2f}s | 控制用时: {total_control_time:.2f}s[/dim]")
+                    if cfg.AUTO_NEXT_TARGET:
+                        console.print(f"[cyan]自动切换 → {target_desc} - {next_target:.1f}° (按Ctrl+C退出)[/cyan]\n")
+                    else:
+                        console.print(f"[yellow]按 Enter 前往 {target_desc} - {next_target:.1f}°，或Ctrl+C退出...[/yellow]\n")
 
-                            if cfg.AUTO_NEXT_TARGET:
-                                console.print(f"[cyan]自动切换 → {target_desc} - {next_target:.1f}° (按Ctrl+C退出)[/cyan]\n")
-                            else:
-                                console.print(f"[yellow]按 Enter 前往 {target_desc} - {next_target:.1f}°，或Ctrl+C退出...[/yellow]\n")
+                    # 悬停并重置PID
+                    for _ in range(5):
+                        send_stick_control(mqtt_client)
+                        time.sleep(0.01)
+                    controller.reset()
+                    reached = True
+                    in_tolerance_since = None
 
-                            # 悬停并重置PID
-                            for _ in range(5):
-                                send_stick_control(mqtt_client)
-                                time.sleep(0.01)
-                            controller.reset()
-                            reached = True
-                            in_tolerance_since = None
-
-                            # 根据模式决定是否等待用户输入
-                            if cfg.AUTO_NEXT_TARGET:
-                                # 自动模式：直接切换
-                                target_index = next_index
-                                target_yaw = next_target
-                                console.print(f"[bold cyan]→ {target_desc} - {target_yaw:.1f}°[/bold cyan]\n")
-                                reached = False
-                                control_start_time = time.time()
-                            else:
-                                # 手动模式：等待键盘输入
-                                try:
-                                    input()
-                                    target_index = next_index
-                                    target_yaw = next_target
-                                    console.print(f"[bold cyan]切换目标 → {target_desc} - {target_yaw:.1f}°[/bold cyan]\n")
-                                    reached = False
-                                    control_start_time = time.time()
-                                except KeyboardInterrupt:
-                                    break
-                            continue
-                else:
-                    # 离开阈值范围，重置计时器
-                    if in_tolerance_since is not None:
-                        console.print(f"[yellow]✗ 偏离目标 (误差:{error_yaw:+.2f}°)，重置稳定计时[/yellow]")
-                        in_tolerance_since = None
+                    # 根据模式决定是否等待用户输入
+                    if cfg.AUTO_NEXT_TARGET:
+                        # 自动模式：直接切换
+                        target_index = next_index
+                        target_yaw = next_target
+                        console.print(f"[bold cyan]→ {target_desc} - {target_yaw:.1f}°[/bold cyan]\n")
+                        reached = False
+                        control_start_time = time.time()
+                    else:
+                        # 手动模式：等待键盘输入
+                        try:
+                            input()
+                            target_index = next_index
+                            target_yaw = next_target
+                            console.print(f"[bold cyan]切换目标 → {target_desc} - {target_yaw:.1f}°[/bold cyan]\n")
+                            reached = False
+                            control_start_time = time.time()
+                        except KeyboardInterrupt:
+                            break
+                    continue
 
             # PID计算并发送控制指令
             current_time = time.time()
-            yaw_offset, pid_components = controller.compute(target_yaw, current_yaw, current_time)
-
-            # 应用死区（如果启用）
-            if cfg.YAW_DEADZONE > 0 and abs(yaw_offset) < cfg.YAW_DEADZONE:
-                yaw_offset = 0
-
-            yaw = int(cfg.NEUTRAL + yaw_offset)
-            send_stick_control(mqtt_client, yaw=yaw)
+            yaw_offset, pid_components, yaw = yaw_control_step(
+                cfg,
+                controller,
+                error_yaw,
+                mqtt_client,
+                current_time,
+            )
 
             # 记录数据（包含PID分量）
             logger.log(
