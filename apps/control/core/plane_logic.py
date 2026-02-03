@@ -40,6 +40,13 @@ def plane_control_step(
     pitch = cfg.NEUTRAL
     pid_components = {'x': (0.0, 0.0, 0.0), 'y': (0.0, 0.0, 0.0)}
 
+    if (
+        state.plane_state != "brake"
+        and state.brake_started_at is not None
+        and (now - state.brake_started_at) < cfg.PLANE_BRAKE_COOLDOWN
+    ):
+        return roll_offset, pitch_offset, pid_components, roll, pitch
+
     if state.plane_state == "approach":
         if distance <= cfg.PLANE_BRAKE_DISTANCE and state.brake_count < cfg.PLANE_BRAKE_MAX_COUNT:
             state.plane_state = "brake"
