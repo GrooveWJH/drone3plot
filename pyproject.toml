@@ -10,5 +10,6 @@ dependencies = [
     "pandas>=2.3.3",
     "plotly>=6.5.0",
     "pydantic>=2.12.5",
+    "textual>=7.5.0",
     "typer>=0.21.0",
 ]
