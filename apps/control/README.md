@@ -76,6 +76,8 @@ python -m apps.control.main_takeoff
 - `PLANE_USE_RANDOM_WAYPOINTS`：随机航点模式
 - `RANDOM_ANGLE_MIN_DIFF`：随机任务 yaw 最小差异
 - `AUTO_NEXT_TARGET`：自动进入下一点（若启用）
+- `VERTICAL_RANDOM_MIN / VERTICAL_RANDOM_MAX`：随机高度范围
+- `VERTICAL_RANDOM_MIN_DELTA`：相邻航点高度最小差（米）
 
 ### 平面控制（XY）
 

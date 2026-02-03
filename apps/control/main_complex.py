@@ -164,18 +164,18 @@ def main() -> int:
             )
 
             if state.loop_count % 2 == 0:
-                info_parts = [
-                    f"[cyan]#{state.loop_count:04d}[/cyan]",
-                    f"WP{ctx.waypoint_index}",
-                    f"目标({info.target_x:+.2f},{info.target_y:+.2f})",
-                    f"当前({info.current_x:+.2f},{info.current_y:+.2f})",
-                    f"距{info.distance*100:5.1f}cm",
-                    f"阶段:{info.phase_label}",
-                ]
-                info_parts.append(
+                total_label = "?" if ctx.total_waypoints is None else str(ctx.total_waypoints)
+                target_z = 0.0 if info.target_z is None else info.target_z
+                current_z = 0.0 if info.current_z is None else info.current_z
+                console.print(
+                    f"[cyan]#{state.loop_count:04d}[/cyan] | "
+                    f"WP{ctx.waypoint_index}/{total_label} | "
+                    f"{info.phase_label} | "
+                    f"目标({info.target_x:+.2f},{info.target_y:+.2f},{target_z:+.2f},{info.target_yaw:+.1f}°) | "
+                    f"当前({info.current_x:+.2f},{info.current_y:+.2f},{current_z:+.2f},{info.current_yaw:+.1f}°) | "
+                    f"距{info.distance*100:5.1f}cm | "
                     f"Out:P{info.pitch_offset:+5.0f}/R{info.roll_offset:+5.0f}/Y{info.yaw_offset:+5.0f}"
                 )
-                console.print(" | ".join(info_parts))
 
                 logger.log(
                     timestamp=loop_start,

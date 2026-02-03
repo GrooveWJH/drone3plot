@@ -40,6 +40,7 @@ def build_move_target_random(
     *,
     current_waypoint: tuple[float, float],
     current_target_yaw: float,
+    current_target_z: float,
     cfg,
     step_index: int,
 ) -> tuple[tuple[float, float], float, float, str]:
@@ -60,9 +61,35 @@ def build_move_target_random(
         max_distance=max_distance,
     )
     next_yaw = generate_random_angle(current_target_yaw, cfg.RANDOM_ANGLE_MIN_DIFF)
-    next_z = cfg.VERTICAL_TARGET_HEIGHT
+    next_z = _generate_random_height(
+        current_target_z=current_target_z,
+        min_height=cfg.VERTICAL_RANDOM_MIN,
+        max_height=cfg.VERTICAL_RANDOM_MAX,
+        min_delta=cfg.VERTICAL_RANDOM_MIN_DELTA,
+    )
     desc = f"随机航点{step_index}"
     return next_waypoint, next_z, next_yaw, desc
+
+
+def _generate_random_height(
+    *,
+    current_target_z: float,
+    min_height: float,
+    max_height: float,
+    min_delta: float,
+    max_attempts: int = 50,
+) -> float:
+    low = min(min_height, max_height)
+    high = max(min_height, max_height)
+    if high <= low:
+        return low
+    if min_delta <= 0:
+        return random.uniform(low, high)
+    for _ in range(max_attempts):
+        candidate = random.uniform(low, high)
+        if abs(candidate - current_target_z) >= min_delta:
+            return candidate
+    return max(low, min(high, current_target_z + min_delta))
 
 
 def build_move_target_fixed(

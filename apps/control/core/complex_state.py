@@ -19,6 +19,7 @@ class ControlState:
     brake_count: int = 0
     settle_started_at: float | None = None
     task_photo_printed: bool = False
+    task_completed_count: int = 0
 
 
 def reset_for_next_target(state: ControlState) -> None:
@@ -33,3 +34,4 @@ def reset_for_next_target(state: ControlState) -> None:
     state.brake_count = 0
     state.settle_started_at = None
     state.task_photo_printed = False
+    state.task_completed_count = 0
