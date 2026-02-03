@@ -1,6 +1,6 @@
 # Control（研发脚本/实验工具）
 
-本目录用于无人机控制算法研发与实验验证，包含平面、垂直、Yaw 控制的独立脚本与可视化工具。  
+本目录用于无人机控制算法研发与实验验证，包含平面、垂直、Yaw、复合控制与起降脚本及可视化工具。  
 定位：**研发脚本/实验工具**，**独立启动**，不作为服务部署。
 
 ## 依赖与准备
@@ -35,10 +35,16 @@ python -m apps.control.main_yaw
 python -m apps.control.main_vertical
 ```
 
-### 4) 完整轨迹控制
+### 4) 平面 + Yaw + 高度复合控制
 
 ```bash
-python -m apps.control.main
+python -m apps.control.main_complex
+```
+
+### 5) 自动起飞/降落（交互式）
+
+```bash
+python -m apps.control.main_takeoff
 ```
 
 ## 参数修改（配置）
@@ -63,10 +69,13 @@ python -m apps.control.main
 - `SLAM_POSE_TOPIC`：位置话题（x/y/z）
 - `SLAM_YAW_TOPIC`：航向话题（yaw）
 
-### 轨迹控制
+### 复合控制（main_complex）
 
-- `TRAJECTORY_FILE`：轨迹文件路径
-- `TRAJECTORY_REQUIRE_CONFIRM`：每个航点是否需要手动确认
+- `WAYPOINTS`：航点列表（支持 xyz + yaw）
+- `TARGET_YAWS`：默认任务朝向（若航点未提供 yaw）
+- `PLANE_USE_RANDOM_WAYPOINTS`：随机航点模式
+- `RANDOM_ANGLE_MIN_DIFF`：随机任务 yaw 最小差异
+- `AUTO_NEXT_TARGET`：自动进入下一点（若启用）
 
 ### 平面控制（XY）
 
@@ -78,6 +87,11 @@ python -m apps.control.main
 - `PLANE_ARRIVAL_STABLE_TIME`
 - `PLANE_USE_RANDOM_WAYPOINTS`：是否使用随机航点
 - `PLANE_RANDOM_*`：随机航点参数
+- `PLANE_BRAKE_DISTANCE`：进入刹车阶段的距离阈值
+- `PLANE_BRAKE_HOLD_TIME`：刹车保持时间
+- `PLANE_BRAKE_MAX_COUNT`：单个航点最多刹车次数
+- `PLANE_SETTLE_DISTANCE`：进入微调阶段的距离阈值
+- `PLANE_SETTLE_KP / KI / KD`：SETTLE 阶段 PID
 
 ### 垂直控制（Z）
 
@@ -104,6 +118,13 @@ python -m apps.control.main
 - `USE_RANDOM_ANGLES`
 - `RANDOM_ANGLE_MIN_DIFF`
 
+### 起飞/降落（main_takeoff）
+
+- `VERTICAL_HEIGHT_SOURCE`：`slam` 或 `relative`
+- `VERTICAL_TARGET_HEIGHT`
+- `VERTICAL_TOLERANCE`
+- `VERTICAL_ARRIVAL_STABLE_TIME`
+
 ### 日志记录
 
 - `ENABLE_DATA_LOGGING`：是否记录 CSV
@@ -117,7 +138,7 @@ python -m apps.control.main
 - 平面控制：`data/plane/<timestamp>/plane_control_data.csv`
 - Yaw 控制：`data/yaw/<timestamp>/yaw_control_data.csv`
 - 垂直控制：`data/vertical/<timestamp>/vertical_control_data.csv`
-- 轨迹控制（若启用）：`data/<timestamp>/control_data.csv`
+- 复合控制：`data/plane_yaw/<timestamp>/plane_yaw_data.csv`
 
 每次运行会生成 `latest/` 目录副本，方便快速查看。
 
