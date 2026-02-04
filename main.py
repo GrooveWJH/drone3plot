@@ -3,6 +3,7 @@ import logging
 import sys
 from pathlib import Path
 
+
 def _ensure_import_paths() -> None:
     project_root = Path(__file__).resolve().parent
     server_root = project_root / "server"

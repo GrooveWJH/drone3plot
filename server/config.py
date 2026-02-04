@@ -38,7 +38,9 @@ class ServerConfig:
 
 @dataclass(frozen=True)
 class MediaConfig:
-    db_path: str = "/Users/groove/Project/work/YunDrone/DJI/MediaServer-CloudAPI/data/media.db"
+    db_path: str = (
+        "/Users/groove/Project/work/YunDrone/DJI/MediaServer-CloudAPI/data/media.db"
+    )
     storage_endpoint: str = "http://127.0.0.1:9000"
     storage_bucket: str = "media"
     storage_region: str = "us-east-1"
