@@ -1,4 +1,5 @@
 """Shared yaw control logic for yaw and complex controllers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

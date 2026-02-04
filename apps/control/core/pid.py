@@ -58,7 +58,10 @@ class PIDController:
 
         # I项（带积分限幅、启动区间与抗饱和）
         if dt > 0:
-            if self.i_activation_threshold is None or abs(error) <= self.i_activation_threshold:
+            if (
+                self.i_activation_threshold is None
+                or abs(error) <= self.i_activation_threshold
+            ):
                 if self.output_limit and self.ki > 0:
                     output_no_i = p_term + d_term
                     candidate_integral = self.integral + error * dt

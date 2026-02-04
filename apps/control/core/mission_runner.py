@@ -34,7 +34,9 @@ class MissionSpec:
 
 def load_mission_from_file(path: Path) -> MissionSpec:
     payload = json.loads(path.read_text(encoding="utf-8"))
-    waypoints_raw = payload.get("waypoints", payload) if isinstance(payload, dict) else payload
+    waypoints_raw = (
+        payload.get("waypoints", payload) if isinstance(payload, dict) else payload
+    )
     waypoints: list[MissionPoint] = []
     for item in waypoints_raw:
         if isinstance(item, dict):
@@ -49,9 +51,15 @@ def load_mission_from_file(path: Path) -> MissionSpec:
             )
         else:
             waypoints.append(
-                MissionPoint(float(item[0]), float(item[1]), float(item[2]), float(item[3]), True)
+                MissionPoint(
+                    float(item[0]), float(item[1]), float(item[2]), float(item[3]), True
+                )
             )
-    initial = waypoints[0] if waypoints else MissionPoint(0.0, 0.0, cfg.VERTICAL_TARGET_HEIGHT, 0.0, True)
+    initial = (
+        waypoints[0]
+        if waypoints
+        else MissionPoint(0.0, 0.0, cfg.VERTICAL_TARGET_HEIGHT, 0.0, True)
+    )
     return MissionSpec(initial=initial, waypoints=waypoints, final=None)
 
 
@@ -93,7 +101,9 @@ def run_complex_mission(
     spec: MissionSpec,
 ) -> None:
     plane_approach = PlaneController(
-        cfg.KP_XY, cfg.KI_XY, cfg.KD_XY,
+        cfg.KP_XY,
+        cfg.KI_XY,
+        cfg.KD_XY,
         cfg.MAX_STICK_OUTPUT,
         enable_gain_scheduling=cfg.PLANE_GAIN_SCHEDULING_CONFIG["enabled"],
         gain_schedule_profile=cfg.PLANE_GAIN_SCHEDULING_CONFIG.get("profile"),
@@ -108,7 +118,9 @@ def run_complex_mission(
         d_filter_alpha=cfg.PLANE_D_FILTER_ALPHA,
     )
     yaw_controller = YawOnlyController(
-        cfg.KP_YAW, cfg.KI_YAW, cfg.KD_YAW,
+        cfg.KP_YAW,
+        cfg.KI_YAW,
+        cfg.KD_YAW,
         cfg.MAX_YAW_STICK_OUTPUT,
         i_activation_error=cfg.YAW_I_ACTIVATION_ERROR,
     )
@@ -143,11 +155,6 @@ def run_complex_mission(
     state = ControlState(control_start_time=time.time())
     init_phase(cfg, state, ctx, position)
 
-    if abs(position[2] - spec.initial.z) <= cfg.VERTICAL_TOLERANCE:
-        state.phase = "task"
-    else:
-        state.phase = "vertical"
-
     total_tasks = ctx.total_waypoints or len(task_required)
     control_interval = 1.0 / cfg.CONTROL_FREQUENCY
     last_print = 0.0
@@ -181,11 +188,11 @@ def run_complex_mission(
                 f"{info.phase_label} | "
                 f"目标({info.target_x:+.2f},{info.target_y:+.2f},{target_z:+.2f},{info.target_yaw:+.1f}°) | "
                 f"当前({info.current_x:+.2f},{info.current_y:+.2f},{current_z:+.2f},{info.current_yaw:+.1f}°) | "
-                f"距{info.distance*100:5.1f}cm | "
+                f"距{info.distance * 100:5.1f}cm | "
                 f"Out:P{info.pitch_offset:+5.0f}/R{info.roll_offset:+5.0f}/Y{info.yaw_offset:+5.0f}"
             )
             last_print = loop_start
-        if state.task_completed_count >= total_tasks:
+        if state.phase == "done":
             return
 
         sleep_time = control_interval - (time.time() - loop_start)

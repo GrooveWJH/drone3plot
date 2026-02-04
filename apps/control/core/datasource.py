@@ -2,6 +2,7 @@
 SLAM 数据源抽象层
 统一提供位置(x, y, z) 与 yaw 角的获取接口。
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -34,7 +35,9 @@ class DataSource(ABC):
 class SlamDataSource(DataSource):
     """SLAM 数据源（slam/position + slam/yaw）"""
 
-    def __init__(self, mqtt_client: MQTTClient, pose_topic: str, yaw_topic: str) -> None:
+    def __init__(
+        self, mqtt_client: MQTTClient, pose_topic: str, yaw_topic: str
+    ) -> None:
         self.pose_service = PoseService(mqtt_client, pose_topic, yaw_topic)
 
     def _latest_valid(self) -> Optional[Tuple[float, float, float, float]]:
@@ -65,6 +68,8 @@ class SlamDataSource(DataSource):
         return None
 
 
-def create_datasource(mqtt_client: MQTTClient, pose_topic: str, yaw_topic: str) -> DataSource:
+def create_datasource(
+    mqtt_client: MQTTClient, pose_topic: str, yaw_topic: str
+) -> DataSource:
     """创建 SLAM 数据源"""
     return SlamDataSource(mqtt_client, pose_topic, yaw_topic)

@@ -57,6 +57,7 @@ from apps.control.config import (  # noqa: E402
 from apps.control.core.pid import PIDController  # noqa: E402
 from apps.control.io.logger import DataLogger  # noqa: E402
 
+
 def _clamp(value: float, min_value: int, max_value: int) -> int:
     return int(max(min_value, min(max_value, value)))
 
@@ -68,20 +69,24 @@ def main() -> int:
         console.print(f"[red]✗ 无效的高度来源: {VERTICAL_HEIGHT_SOURCE}[/red]")
         return 1
 
-    console.print(Panel.fit(
-        "[bold cyan]垂直高度控制器[/bold cyan]\n"
-        f"[yellow]高度来源: {height_source}[/yellow]\n"
-        f"[dim]目标高度: {VERTICAL_TARGET_HEIGHT:.2f} m | 容差: ±{VERTICAL_TOLERANCE:.2f} m[/dim]\n"
-        f"[dim]PID: Kp={VERTICAL_KP}, Ki={VERTICAL_KI}, Kd={VERTICAL_KD}[/dim]\n"
-        "[dim]提示: 需先完成 DRC 授权 + 进入 DRC 模式[/dim]",
-        border_style="cyan"
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]垂直高度控制器[/bold cyan]\n"
+            f"[yellow]高度来源: {height_source}[/yellow]\n"
+            f"[dim]目标高度: {VERTICAL_TARGET_HEIGHT:.2f} m | 容差: ±{VERTICAL_TOLERANCE:.2f} m[/dim]\n"
+            f"[dim]PID: Kp={VERTICAL_KP}, Ki={VERTICAL_KI}, Kd={VERTICAL_KD}[/dim]\n"
+            "[dim]提示: 需先完成 DRC 授权 + 进入 DRC 模式[/dim]",
+            border_style="cyan",
+        )
+    )
 
     console.print("\n[cyan]━━━ 步骤 1/2: 连接MQTT ━━━[/cyan]")
     mqtt_client = MQTTClient(GATEWAY_SN, MQTT_CONFIG)
     try:
         mqtt_client.connect()
-        console.print(f"[green]✓ MQTT已连接: {MQTT_CONFIG['host']}:{MQTT_CONFIG['port']}[/green]")
+        console.print(
+            f"[green]✓ MQTT已连接: {MQTT_CONFIG['host']}:{MQTT_CONFIG['port']}[/green]"
+        )
     except Exception as e:
         console.print(f"[red]✗ MQTT连接失败: {e}[/red]")
         return 1
@@ -130,7 +135,9 @@ def main() -> int:
         if VERTICAL_SLAM_ZERO_AT_START:
             if slam_zero is None:
                 slam_zero = z
-                console.print(f"[cyan]SLAM 初始高度: {slam_zero:.3f} m (置为 0点)[/cyan]")
+                console.print(
+                    f"[cyan]SLAM 初始高度: {slam_zero:.3f} m (置为 0点)[/cyan]"
+                )
             return z - slam_zero
         return z
 
@@ -166,7 +173,9 @@ def main() -> int:
                 if abs(error) <= VERTICAL_TOLERANCE:
                     if in_tolerance_since is None:
                         in_tolerance_since = loop_start
-                    elif loop_start - in_tolerance_since >= VERTICAL_ARRIVAL_STABLE_TIME:
+                    elif (
+                        loop_start - in_tolerance_since >= VERTICAL_ARRIVAL_STABLE_TIME
+                    ):
                         send_stick_control(mqtt_client, throttle=NEUTRAL)
                         reached = True
                         console.print(

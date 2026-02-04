@@ -130,7 +130,7 @@ def main():
     console = Console()
 
     gain_scheduling_cfg = cfg.PLANE_GAIN_SCHEDULING_CONFIG
-    gain_scheduling_enabled = gain_scheduling_cfg['enabled']
+    gain_scheduling_enabled = gain_scheduling_cfg["enabled"]
 
     # 根据配置决定使用固定航点还是随机航点
     if cfg.PLANE_USE_RANDOM_WAYPOINTS:
@@ -141,32 +141,45 @@ def main():
         )
     else:
         waypoints_str = "\n".join(
-            [f"    航点{i}: ({wp[0]:.2f}, {wp[1]:.2f})m" for i, wp in enumerate(cfg.WAYPOINTS)])
-        mode_info = f"[dim]航点数量: {len(cfg.WAYPOINTS)}[/dim]\n[dim]{waypoints_str}[/dim]"
+            [
+                f"    航点{i}: ({wp[0]:.2f}, {wp[1]:.2f})m"
+                for i, wp in enumerate(cfg.WAYPOINTS)
+            ]
+        )
+        mode_info = (
+            f"[dim]航点数量: {len(cfg.WAYPOINTS)}[/dim]\n[dim]{waypoints_str}[/dim]"
+        )
 
-    auto_mode_info = "[yellow]自动模式: 已启用[/yellow]" if cfg.PLANE_AUTO_NEXT_WAYPOINT else "[dim]手动模式: 到达后需按Enter[/dim]"
+    auto_mode_info = (
+        "[yellow]自动模式: 已启用[/yellow]"
+        if cfg.PLANE_AUTO_NEXT_WAYPOINT
+        else "[dim]手动模式: 到达后需按Enter[/dim]"
+    )
 
     # 控制特性说明
     features = []
     if gain_scheduling_enabled:
         features.append(
-            f"[green]增益调度[/green] (远:{gain_scheduling_cfg['distance_far']}m, 近:{gain_scheduling_cfg['distance_near']}m)")
+            f"[green]增益调度[/green] (远:{gain_scheduling_cfg['distance_far']}m, 近:{gain_scheduling_cfg['distance_near']}m)"
+        )
     features.append("[green]三段控制[/green] (APPROACH → BRAKE → SETTLE)")
     features_info = " | ".join(features) if features else "[dim]基础PID控制[/dim]"
 
     # 显示数据源配置
     data_source_info = f"[yellow]位置源: SLAM[/yellow] ({cfg.SLAM_POSE_TOPIC})"
 
-    console.print(Panel.fit(
-        "[bold cyan]平面位置PID控制器 - 重构版本[/bold cyan]\n"
-        f"{data_source_info}\n"
-        f"{mode_info}\n"
-        f"{auto_mode_info}\n"
-        f"[dim]到达阈值: {cfg.TOLERANCE_XY*100:.1f} cm[/dim]\n"
-        f"[dim]PID参数: Kp={cfg.KP_XY}, Ki={cfg.KI_XY}, Kd={cfg.KD_XY}[/dim]\n"
-        f"[bold]控制特性:[/bold] {features_info}",
-        border_style="cyan"
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]平面位置PID控制器 - 重构版本[/bold cyan]\n"
+            f"{data_source_info}\n"
+            f"{mode_info}\n"
+            f"{auto_mode_info}\n"
+            f"[dim]到达阈值: {cfg.TOLERANCE_XY * 100:.1f} cm[/dim]\n"
+            f"[dim]PID参数: Kp={cfg.KP_XY}, Ki={cfg.KI_XY}, Kd={cfg.KD_XY}[/dim]\n"
+            f"[bold]控制特性:[/bold] {features_info}",
+            border_style="cyan",
+        )
+    )
 
     # 1. 连接MQTT客户端
     console.print("\n[cyan]━━━ 步骤 1/2: 连接MQTT ━━━[/cyan]")
@@ -174,11 +187,11 @@ def main():
     try:
         mqtt_client.connect()
         console.print(
-            f"[green]✓ MQTT已连接: {cfg.MQTT_CONFIG['host']}:{cfg.MQTT_CONFIG['port']}[/green]")
+            f"[green]✓ MQTT已连接: {cfg.MQTT_CONFIG['host']}:{cfg.MQTT_CONFIG['port']}[/green]"
+        )
     except Exception as e:
         console.print(f"[red]✗ MQTT连接失败: {e}[/red]")
         return 1
-
 
     # 2. 启动心跳
     console.print("\n[cyan]━━━ 步骤 2/2: 启动心跳 ━━━[/cyan]")
@@ -189,7 +202,8 @@ def main():
     console.print("\n[cyan]━━━ 创建数据源接口 ━━━[/cyan]")
     try:
         datasource = create_datasource(
-            mqtt_client, cfg.SLAM_POSE_TOPIC, cfg.SLAM_YAW_TOPIC)
+            mqtt_client, cfg.SLAM_POSE_TOPIC, cfg.SLAM_YAW_TOPIC
+        )
         console.print("[green]✓ 数据源已创建: 位置=SLAM[/green]")
     except Exception as e:
         console.print(f"[red]✗ 数据源创建失败: {e}[/red]")
@@ -199,10 +213,12 @@ def main():
 
     # 4. 初始化控制器和航点
     approach_controller = PlaneController(
-        cfg.KP_XY, cfg.KI_XY, cfg.KD_XY,
+        cfg.KP_XY,
+        cfg.KI_XY,
+        cfg.KD_XY,
         cfg.MAX_STICK_OUTPUT,
         enable_gain_scheduling=gain_scheduling_enabled,
-        gain_schedule_profile=gain_scheduling_cfg.get('profile'),
+        gain_schedule_profile=gain_scheduling_cfg.get("profile"),
         d_filter_alpha=cfg.PLANE_D_FILTER_ALPHA,
     )
     settle_controller = PlaneController(
@@ -216,8 +232,8 @@ def main():
 
     # 应用配置的增益调度参数
     if gain_scheduling_enabled:
-        approach_controller.distance_far = gain_scheduling_cfg['distance_far']
-        approach_controller.distance_near = gain_scheduling_cfg['distance_near']
+        approach_controller.distance_far = gain_scheduling_cfg["distance_far"]
+        approach_controller.distance_near = gain_scheduling_cfg["distance_near"]
 
     # 初始化航点
     if cfg.PLANE_USE_RANDOM_WAYPOINTS:
@@ -237,9 +253,9 @@ def main():
     # 5. 初始化数据记录器
     logger = DataLogger(
         enabled=cfg.ENABLE_DATA_LOGGING,
-        field_set='plane_only',
-        csv_name='plane_control_data.csv',
-        subdir='plane'
+        field_set="plane_only",
+        csv_name="plane_control_data.csv",
+        subdir="plane",
     )
     if logger.enabled:
         console.print(f"[green]✓ 数据记录已启用: {logger.get_log_dir()}[/green]")
@@ -247,10 +263,12 @@ def main():
     console.print("\n[bold green]✓ 初始化完成！开始控制...[/bold green]")
     if cfg.PLANE_USE_RANDOM_WAYPOINTS:
         console.print(
-            f"[cyan]首个目标: 航点{waypoint_index} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m[/cyan]")
+            f"[cyan]首个目标: 航点{waypoint_index} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m[/cyan]"
+        )
     else:
         console.print(
-            f"[cyan]首个目标: 航点{waypoint_index} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m[/cyan]")
+            f"[cyan]首个目标: 航点{waypoint_index} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m[/cyan]"
+        )
     console.print("[yellow]提示: 按Ctrl+C可随时退出[/yellow]\n")
 
     # 控制循环
@@ -267,7 +285,7 @@ def main():
             pitch_offset = 0.0
             roll = cfg.NEUTRAL
             pitch = cfg.NEUTRAL
-            pid_components = {'x': (0.0, 0.0, 0.0), 'y': (0.0, 0.0, 0.0)}
+            pid_components = {"x": (0.0, 0.0, 0.0), "y": (0.0, 0.0, 0.0)}
 
             # 读取位置数据（使用统一数据源接口）
             position = datasource.get_position()
@@ -281,42 +299,58 @@ def main():
                 time.sleep(0.1)
                 continue
 
-            yaw_for_control = 0.0 if abs(
-                current_yaw) <= cfg.YAW_ZERO_THRESHOLD_DEG else current_yaw
+            yaw_for_control = (
+                0.0 if abs(current_yaw) <= cfg.YAW_ZERO_THRESHOLD_DEG else current_yaw
+            )
             # 假设 SLAM yaw 为顺时针为正（0°=正北, 90°=正东）
             yaw_rad = math.radians(yaw_for_control)
             target_x, target_y = target_waypoint
             distance = approach_controller.get_distance(
-                target_x, target_y, current_x, current_y)
+                target_x, target_y, current_x, current_y
+            )
 
             # 世界坐标误差 -> 机体系误差（FLU）
             error_x_world = target_x - current_x
             error_y_world = target_y - current_y
-            error_x_body = math.cos(
-                yaw_rad) * error_x_world + math.sin(yaw_rad) * error_y_world
-            error_y_body = -math.sin(yaw_rad) * error_x_world + \
-                                     math.cos(yaw_rad) * error_y_world
+            error_x_body = (
+                math.cos(yaw_rad) * error_x_world + math.sin(yaw_rad) * error_y_world
+            )
+            error_y_body = (
+                -math.sin(yaw_rad) * error_x_world + math.cos(yaw_rad) * error_y_world
+            )
 
             # 判断是否到达（带时间稳定性检查）
-            if not state.reached and state.plane_state in {"approach", "brake", "settle"}:
+            if not state.reached and state.plane_state in {
+                "approach",
+                "brake",
+                "settle",
+            }:
                 state.in_tolerance_since, stable_duration = update_stability_timer(
                     in_range=distance < cfg.TOLERANCE_XY,
                     in_tolerance_since=state.in_tolerance_since,
                     now=current_time,
                     console=console,
                     enter_message=(
-                        f"[yellow]⏱ 进入阈值范围 (距离:{distance*100:.2f}cm)，等待稳定 {cfg.PLANE_ARRIVAL_STABLE_TIME}s...[/yellow]"
+                        f"[yellow]⏱ 进入阈值范围 (距离:{distance * 100:.2f}cm)，等待稳定 {cfg.PLANE_ARRIVAL_STABLE_TIME}s...[/yellow]"
                     ),
                     exit_message=(
-                        f"[yellow]✗ 偏离目标 (距离:{distance*100:.2f}cm)，重置稳定计时[/yellow]"
+                        f"[yellow]✗ 偏离目标 (距离:{distance * 100:.2f}cm)，重置稳定计时[/yellow]"
                     ),
                     suppress_exit_log=(state.plane_state == "brake"),
                 )
                 if stable_duration is not None:
                     brake_cooldown_ok = True
-                    if state.plane_state == "brake" and state.brake_started_at is not None:
-                        brake_cooldown_ok = (current_time - state.brake_started_at) >= cfg.PLANE_BRAKE_HOLD_TIME
-                    if brake_cooldown_ok and stable_duration >= cfg.PLANE_ARRIVAL_STABLE_TIME:
+                    if (
+                        state.plane_state == "brake"
+                        and state.brake_started_at is not None
+                    ):
+                        brake_cooldown_ok = (
+                            current_time - state.brake_started_at
+                        ) >= cfg.PLANE_BRAKE_HOLD_TIME
+                    if (
+                        brake_cooldown_ok
+                        and stable_duration >= cfg.PLANE_ARRIVAL_STABLE_TIME
+                    ):
                         # 真正到达！
                         total_control_time = time.time() - state.control_start_time
 
@@ -350,7 +384,7 @@ def main():
                             f"\n[bold green]✓ 已到达航点{waypoint_index} - ({target_waypoint[0]:.2f}, {target_waypoint[1]:.2f})m！[/bold green]"
                         )
                         console.print(
-                            f"[dim]最终距离: {distance*100:.2f} cm | 稳定时长: {stable_duration:.2f}s | 控制用时: {total_control_time:.2f}s[/dim]"
+                            f"[dim]最终距离: {distance * 100:.2f} cm | 稳定时长: {stable_duration:.2f}s | 控制用时: {total_control_time:.2f}s[/dim]"
                         )
 
                         if cfg.PLANE_AUTO_NEXT_WAYPOINT:
@@ -419,24 +453,37 @@ def main():
             if state.loop_count % 2 == 0:
                 error_x = target_x - current_x
                 error_y = target_y - current_y
-                kp_scale = approach_controller.x_pid.kp / approach_controller.kp_base if gain_scheduling_enabled else 1.0
-                kd_scale = approach_controller.x_pid.kd / approach_controller.kd_base if gain_scheduling_enabled else 1.0
+                kp_scale = (
+                    approach_controller.x_pid.kp / approach_controller.kp_base
+                    if gain_scheduling_enabled
+                    else 1.0
+                )
+                kd_scale = (
+                    approach_controller.x_pid.kd / approach_controller.kd_base
+                    if gain_scheduling_enabled
+                    else 1.0
+                )
                 info_parts = [
                     f"[cyan]#{state.loop_count:04d}[/cyan]",
                     f"WP{waypoint_index}",
                     f"目标({target_x:+.2f},{target_y:+.2f})",
                     f"当前({current_x:+.2f},{current_y:+.2f})",
-                    f"距{distance*100:5.1f}cm",
-                    f"阶段:{state.plane_state.upper()}"
+                    f"距{distance * 100:5.1f}cm",
+                    f"阶段:{state.plane_state.upper()}",
                 ]
                 if gain_scheduling_enabled and state.plane_state == "approach":
-                    info_parts.append(f"[yellow]Kp×{kp_scale:.2f} Kd×{kd_scale:.2f}[/yellow]")
+                    info_parts.append(
+                        f"[yellow]Kp×{kp_scale:.2f} Kd×{kd_scale:.2f}[/yellow]"
+                    )
 
                 info_parts.append(f"Out:P{pitch_offset:+5.0f}/R{roll_offset:+5.0f}")
-                info_parts.append(f"X(P{pid_components['x'][0]:+5.0f}/I{pid_components['x'][1]:+5.0f}/D{pid_components['x'][2]:+5.0f})")
-                info_parts.append(f"Y(P{pid_components['y'][0]:+5.0f}/I{pid_components['y'][1]:+5.0f}/D{pid_components['y'][2]:+5.0f})")
+                info_parts.append(
+                    f"X(P{pid_components['x'][0]:+5.0f}/I{pid_components['x'][1]:+5.0f}/D{pid_components['x'][2]:+5.0f})"
+                )
+                info_parts.append(
+                    f"Y(P{pid_components['y'][0]:+5.0f}/I{pid_components['y'][1]:+5.0f}/D{pid_components['y'][2]:+5.0f})"
+                )
                 console.print(" | ".join(info_parts))
-
 
                 # 记录数据（包含PID分量）
                 error_x = target_x - current_x
@@ -456,13 +503,13 @@ def main():
                     pitch_absolute=pitch,
                     waypoint_index=waypoint_index,
                     # PID components for X (Pitch)
-                    x_pid_p=pid_components['x'][0],
-                    x_pid_i=pid_components['x'][1],
-                    x_pid_d=pid_components['x'][2],
+                    x_pid_p=pid_components["x"][0],
+                    x_pid_i=pid_components["x"][1],
+                    x_pid_d=pid_components["x"][2],
                     # PID components for Y (Roll)
-                    y_pid_p=pid_components['y'][0],
-                    y_pid_i=pid_components['y'][1],
-                    y_pid_d=pid_components['y'][2]
+                    y_pid_p=pid_components["y"][0],
+                    y_pid_i=pid_components["y"][1],
+                    y_pid_d=pid_components["y"][2],
                 )
 
             # 精确控制循环频率
@@ -476,6 +523,7 @@ def main():
         console.print(f"\n\n[red]✗ 发生错误: {e}[/red]")
         console.print(f"[red]错误类型: {type(e).__name__}[/red]")
         import traceback
+
         console.print(f"[dim]{traceback.format_exc()}[/dim]\n")
     finally:
         console.print("[cyan]━━━ 清理资源 ━━━[/cyan]")
@@ -500,5 +548,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit(main())

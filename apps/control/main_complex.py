@@ -34,7 +34,11 @@ from rich.panel import Panel  # noqa: E402
 from apps.control import config as cfg  # noqa: E402
 from apps.control.core.complex_runtime import init_context, init_phase, step_complex  # noqa: E402
 from apps.control.core.complex_state import ControlState  # noqa: E402
-from apps.control.core.controller import PlaneController, YawOnlyController, get_yaw_error  # noqa: E402
+from apps.control.core.controller import (
+    PlaneController,
+    YawOnlyController,
+    get_yaw_error,
+)  # noqa: E402
 from apps.control.core.datasource import create_datasource  # noqa: E402
 from apps.control.core.pid import PIDController  # noqa: E402
 from apps.control.io.logger import DataLogger  # noqa: E402
@@ -43,12 +47,16 @@ from apps.control.io.logger import DataLogger  # noqa: E402
 def main() -> int:
     console = Console()
 
-    mode_info = "[dim]模式: 随机航点+随机Yaw[/dim]" if cfg.PLANE_USE_RANDOM_WAYPOINTS else "[dim]模式: 固定航点+固定Yaw[/dim]"
+    mode_info = (
+        "[dim]模式: 随机航点+随机Yaw[/dim]"
+        if cfg.PLANE_USE_RANDOM_WAYPOINTS
+        else "[dim]模式: 固定航点+固定Yaw[/dim]"
+    )
     console.print(
         Panel.fit(
             "[bold cyan]平面+Yaw 联合控制[/bold cyan]\n"
             f"{mode_info}\n"
-            f"[dim]平面到达阈值: {cfg.TOLERANCE_XY*100:.1f} cm[/dim]\n"
+            f"[dim]平面到达阈值: {cfg.TOLERANCE_XY * 100:.1f} cm[/dim]\n"
             f"[dim]Yaw到达阈值: ±{cfg.TOLERANCE_YAW:.1f}°[/dim]\n"
             f"[dim]刹车保持: {cfg.PLANE_BRAKE_HOLD_TIME:.2f}s[/dim]",
             border_style="cyan",
@@ -59,7 +67,9 @@ def main() -> int:
     mqtt_client = MQTTClient(cfg.GATEWAY_SN, cfg.MQTT_CONFIG)
     try:
         mqtt_client.connect()
-        console.print(f"[green]✓ MQTT已连接: {cfg.MQTT_CONFIG['host']}:{cfg.MQTT_CONFIG['port']}[/green]")
+        console.print(
+            f"[green]✓ MQTT已连接: {cfg.MQTT_CONFIG['host']}:{cfg.MQTT_CONFIG['port']}[/green]"
+        )
     except Exception as exc:
         console.print(f"[red]✗ MQTT连接失败: {exc}[/red]")
         return 1
@@ -70,7 +80,9 @@ def main() -> int:
 
     console.print("\n[cyan]━━━ 创建数据源接口 ━━━[/cyan]")
     try:
-        datasource = create_datasource(mqtt_client, cfg.SLAM_POSE_TOPIC, cfg.SLAM_YAW_TOPIC)
+        datasource = create_datasource(
+            mqtt_client, cfg.SLAM_POSE_TOPIC, cfg.SLAM_YAW_TOPIC
+        )
         console.print("[green]✓ 数据源已创建: 位置=SLAM, 航向=SLAM[/green]")
     except Exception as exc:
         console.print(f"[red]✗ 数据源创建失败: {exc}[/red]")
@@ -79,7 +91,9 @@ def main() -> int:
         return 1
 
     plane_approach = PlaneController(
-        cfg.KP_XY, cfg.KI_XY, cfg.KD_XY,
+        cfg.KP_XY,
+        cfg.KI_XY,
+        cfg.KD_XY,
         cfg.MAX_STICK_OUTPUT,
         enable_gain_scheduling=cfg.PLANE_GAIN_SCHEDULING_CONFIG["enabled"],
         gain_schedule_profile=cfg.PLANE_GAIN_SCHEDULING_CONFIG.get("profile"),
@@ -94,7 +108,9 @@ def main() -> int:
         d_filter_alpha=cfg.PLANE_D_FILTER_ALPHA,
     )
     yaw_controller = YawOnlyController(
-        cfg.KP_YAW, cfg.KI_YAW, cfg.KD_YAW,
+        cfg.KP_YAW,
+        cfg.KI_YAW,
+        cfg.KD_YAW,
         cfg.MAX_YAW_STICK_OUTPUT,
         i_activation_error=cfg.YAW_I_ACTIVATION_ERROR,
     )
@@ -164,7 +180,9 @@ def main() -> int:
             )
 
             if state.loop_count % 2 == 0:
-                total_label = "?" if ctx.total_waypoints is None else str(ctx.total_waypoints)
+                total_label = (
+                    "?" if ctx.total_waypoints is None else str(ctx.total_waypoints)
+                )
                 target_z = 0.0 if info.target_z is None else info.target_z
                 current_z = 0.0 if info.current_z is None else info.current_z
                 console.print(
@@ -173,7 +191,7 @@ def main() -> int:
                     f"{info.phase_label} | "
                     f"目标({info.target_x:+.2f},{info.target_y:+.2f},{target_z:+.2f},{info.target_yaw:+.1f}°) | "
                     f"当前({info.current_x:+.2f},{info.current_y:+.2f},{current_z:+.2f},{info.current_yaw:+.1f}°) | "
-                    f"距{info.distance*100:5.1f}cm | "
+                    f"距{info.distance * 100:5.1f}cm | "
                     f"Out:P{info.pitch_offset:+5.0f}/R{info.roll_offset:+5.0f}/Y{info.yaw_offset:+5.0f}"
                 )
 
@@ -217,6 +235,7 @@ def main() -> int:
         console.print(f"\n\n[red]✗ 发生错误: {exc}[/red]")
         console.print(f"[red]错误类型: {type(exc).__name__}[/red]")
         import traceback
+
         console.print(f"[dim]{traceback.format_exc()}[/dim]\n")
     finally:
         console.print("[cyan]━━━ 清理资源 ━━━[/cyan]")

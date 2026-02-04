@@ -1,4 +1,5 @@
 """Shared plane control logic for plane and complex controllers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -38,7 +39,7 @@ def plane_control_step(
     pitch_offset = 0.0
     roll = cfg.NEUTRAL
     pitch = cfg.NEUTRAL
-    pid_components = {'x': (0.0, 0.0, 0.0), 'y': (0.0, 0.0, 0.0)}
+    pid_components = {"x": (0.0, 0.0, 0.0), "y": (0.0, 0.0, 0.0)}
 
     if (
         state.plane_state != "brake"
@@ -48,7 +49,10 @@ def plane_control_step(
         return roll_offset, pitch_offset, pid_components, roll, pitch
 
     if state.plane_state == "approach":
-        if distance <= cfg.PLANE_BRAKE_DISTANCE and state.brake_count < cfg.PLANE_BRAKE_MAX_COUNT:
+        if (
+            distance <= cfg.PLANE_BRAKE_DISTANCE
+            and state.brake_count < cfg.PLANE_BRAKE_MAX_COUNT
+        ):
             state.plane_state = "brake"
             state.brake_started_at = now
             state.brake_count += 1
@@ -85,7 +89,10 @@ def plane_control_step(
             state.plane_state = "approach"
             plane_approach.reset()
             state.settle_started_at = None
-        elif state.settle_started_at and (now - state.settle_started_at) >= cfg.PLANE_SETTLE_TIMEOUT:
+        elif (
+            state.settle_started_at
+            and (now - state.settle_started_at) >= cfg.PLANE_SETTLE_TIMEOUT
+        ):
             state.plane_state = "approach"
             plane_approach.reset()
             state.settle_started_at = None

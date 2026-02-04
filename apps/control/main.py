@@ -41,10 +41,16 @@ app = typer.Typer(add_completion=False)
 def main(
     file: Path | None = typer.Option(None, "--file", help="航点文件路径（json）"),
     count: int = typer.Option(5, "--count", help="随机航点数量"),
-    final: str | None = typer.Option(None, "--final", help="最终点 x,y,z,yaw（默认最后一个航点）"),
+    final: str | None = typer.Option(
+        None, "--final", help="最终点 x,y,z,yaw（默认最后一个航点）"
+    ),
 ) -> None:
     console = Console()
-    console.print(Panel.fit("[bold cyan]起飞 → complex → 回原点 → 降落[/bold cyan]", border_style="cyan"))
+    console.print(
+        Panel.fit(
+            "[bold cyan]起飞 → complex → 回原点 → 降落[/bold cyan]", border_style="cyan"
+        )
+    )
 
     if file:
         spec = load_mission_from_file(file)
@@ -55,7 +61,9 @@ def main(
         parts = [p.strip() for p in final.split(",")]
         if len(parts) != 4:
             raise typer.BadParameter("final 必须为 x,y,z,yaw")
-        final_point = MissionPoint(float(parts[0]), float(parts[1]), float(parts[2]), float(parts[3]))
+        final_point = MissionPoint(
+            float(parts[0]), float(parts[1]), float(parts[2]), float(parts[3])
+        )
     spec = MissionSpec(
         initial=spec.initial,
         waypoints=spec.waypoints,
@@ -85,7 +93,9 @@ def main(
             raise typer.Exit(code=1)
 
         datasource = create_datasource(mqtt, cfg.SLAM_POSE_TOPIC, cfg.SLAM_YAW_TOPIC)
-        run_complex_mission(mqtt=mqtt, datasource=datasource, console=console, spec=spec)
+        run_complex_mission(
+            mqtt=mqtt, datasource=datasource, console=console, spec=spec
+        )
         console.print("[yellow]已返回原点，开始降落[/yellow]")
         _land(mqtt, console, state, pose_service)
 

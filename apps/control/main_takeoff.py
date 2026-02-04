@@ -36,7 +36,9 @@ from apps.control.core.pid import PIDController  # noqa: E402
 from apps.control.core.pose_service import PoseService  # noqa: E402
 
 
-def _wait_for_slam_height(pose_service: PoseService, timeout: float = 30.0) -> Optional[float]:
+def _wait_for_slam_height(
+    pose_service: PoseService, timeout: float = 30.0
+) -> Optional[float]:
     deadline = time.time() + timeout
     while time.time() < deadline:
         pose = pose_service.latest()
@@ -173,7 +175,9 @@ def _run_takeoff(
                     f"[yellow]⏱ 进入高度阈值 (误差:{error:+.2f}m)，等待稳定 {cfg.VERTICAL_ARRIVAL_STABLE_TIME}s...[/yellow]"
                 )
             elif loop_start - in_tolerance_since >= cfg.VERTICAL_ARRIVAL_STABLE_TIME:
-                console.print(f"[bold green]✓ 已到达目标高度: {height:.2f} m[/bold green]")
+                console.print(
+                    f"[bold green]✓ 已到达目标高度: {height:.2f} m[/bold green]"
+                )
                 state.airborne = True
                 return True
         else:
@@ -207,13 +211,15 @@ def main(
 ) -> None:
     console = Console()
 
-    console.print(Panel.fit(
-        "[bold cyan]自动起飞[/bold cyan]\n"
-        f"[dim]目标高度: {cfg.VERTICAL_TARGET_HEIGHT:.2f} m | 容差: ±{cfg.VERTICAL_TOLERANCE:.2f} m[/dim]\n"
-        f"[dim]控制频率: {cfg.VERTICAL_CONTROL_FREQUENCY} Hz[/dim]\n"
-        "[dim]到达后仅保留心跳[/dim]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]自动起飞[/bold cyan]\n"
+            f"[dim]目标高度: {cfg.VERTICAL_TARGET_HEIGHT:.2f} m | 容差: ±{cfg.VERTICAL_TOLERANCE:.2f} m[/dim]\n"
+            f"[dim]控制频率: {cfg.VERTICAL_CONTROL_FREQUENCY} Hz[/dim]\n"
+            "[dim]到达后仅保留心跳[/dim]",
+            border_style="cyan",
+        )
+    )
 
     mqtt = None
     heartbeat = None
@@ -257,7 +263,9 @@ def main(
         console.print("[yellow]进入保持模式：仅心跳，不再发送杆量[/yellow]")
         send_stick_repeatedly(mqtt, duration=1.0, frequency=10)
         while True:
-            console.print("[dim]输入 down 开始降落；输入 up 重新起飞；Ctrl+C 退出。[/dim]")
+            console.print(
+                "[dim]输入 down 开始降落；输入 up 重新起飞；Ctrl+C 退出。[/dim]"
+            )
             user_input = input().strip().lower()
             if user_input == "down":
                 landed = _land(mqtt, console, state, pose_service)
@@ -269,7 +277,9 @@ def main(
                     _arm_drone(mqtt, console)
                 else:
                     console.print("[yellow]检测到已在空中，跳过外八解锁[/yellow]")
-                if not _run_takeoff(mqtt, console, state, pose_service, auto_land_on_fail=True):
+                if not _run_takeoff(
+                    mqtt, console, state, pose_service, auto_land_on_fail=True
+                ):
                     console.print("[red]✗ 起飞失败，已执行降落，等待新指令[/red]")
                 continue
             time.sleep(0.2)

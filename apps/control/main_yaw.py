@@ -90,32 +90,46 @@ def main():
 
     # 根据配置决定使用固定目标还是随机目标
     if cfg.USE_RANDOM_ANGLES:
-        mode_info = f"[dim]模式: 随机角度生成 (最小角度差: {cfg.RANDOM_ANGLE_MIN_DIFF}°)[/dim]"
+        mode_info = (
+            f"[dim]模式: 随机角度生成 (最小角度差: {cfg.RANDOM_ANGLE_MIN_DIFF}°)[/dim]"
+        )
     else:
-        targets_str = "\n".join([f"    目标{i}: {yaw}°" for i, yaw in enumerate(cfg.TARGET_YAWS)])
-        mode_info = f"[dim]目标数量: {len(cfg.TARGET_YAWS)}[/dim]\n[dim]{targets_str}[/dim]"
+        targets_str = "\n".join(
+            [f"    目标{i}: {yaw}°" for i, yaw in enumerate(cfg.TARGET_YAWS)]
+        )
+        mode_info = (
+            f"[dim]目标数量: {len(cfg.TARGET_YAWS)}[/dim]\n[dim]{targets_str}[/dim]"
+        )
 
-    auto_mode_info = "[yellow]自动模式: 已启用[/yellow]" if cfg.AUTO_NEXT_TARGET else "[dim]手动模式: 到达后需按Enter[/dim]"
+    auto_mode_info = (
+        "[yellow]自动模式: 已启用[/yellow]"
+        if cfg.AUTO_NEXT_TARGET
+        else "[dim]手动模式: 到达后需按Enter[/dim]"
+    )
 
     # 显示数据源配置
     data_source_info = f"[yellow]航向角源: SLAM[/yellow] ({cfg.SLAM_YAW_TOPIC})"
 
-    console.print(Panel.fit(
-        "[bold cyan]Yaw角PID控制器 - 重构版本[/bold cyan]\n"
-        f"{data_source_info}\n"
-        f"{mode_info}\n"
-        f"{auto_mode_info}\n"
-        f"[dim]到达阈值: ±{cfg.TOLERANCE_YAW:.1f}°[/dim]\n"
-        f"[dim]PID参数: Kp={cfg.KP_YAW}, Ki={cfg.KI_YAW}, Kd={cfg.KD_YAW}[/dim]",
-        border_style="cyan"
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]Yaw角PID控制器 - 重构版本[/bold cyan]\n"
+            f"{data_source_info}\n"
+            f"{mode_info}\n"
+            f"{auto_mode_info}\n"
+            f"[dim]到达阈值: ±{cfg.TOLERANCE_YAW:.1f}°[/dim]\n"
+            f"[dim]PID参数: Kp={cfg.KP_YAW}, Ki={cfg.KI_YAW}, Kd={cfg.KD_YAW}[/dim]",
+            border_style="cyan",
+        )
+    )
 
     # 1. 连接MQTT客户端
     console.print("\n[cyan]━━━ 步骤 1/2: 连接MQTT ━━━[/cyan]")
     mqtt_client = MQTTClient(cfg.GATEWAY_SN, cfg.MQTT_CONFIG)
     try:
         mqtt_client.connect()
-        console.print(f"[green]✓ MQTT已连接: {cfg.MQTT_CONFIG['host']}:{cfg.MQTT_CONFIG['port']}[/green]")
+        console.print(
+            f"[green]✓ MQTT已连接: {cfg.MQTT_CONFIG['host']}:{cfg.MQTT_CONFIG['port']}[/green]"
+        )
     except Exception as e:
         console.print(f"[red]✗ MQTT连接失败: {e}[/red]")
         return 1
@@ -128,7 +142,9 @@ def main():
     # 3. 创建统一数据源
     console.print("\n[cyan]━━━ 创建数据源接口 ━━━[/cyan]")
     try:
-        datasource = create_datasource(mqtt_client, cfg.SLAM_POSE_TOPIC, cfg.SLAM_YAW_TOPIC)
+        datasource = create_datasource(
+            mqtt_client, cfg.SLAM_POSE_TOPIC, cfg.SLAM_YAW_TOPIC
+        )
         console.print("[green]✓ 数据源已创建: 航向角=SLAM[/green]")
     except Exception as e:
         console.print(f"[red]✗ 数据源创建失败: {e}[/red]")
@@ -138,9 +154,11 @@ def main():
 
     # 4. 初始化控制器和目标
     controller = YawOnlyController(
-        cfg.KP_YAW, cfg.KI_YAW, cfg.KD_YAW,
+        cfg.KP_YAW,
+        cfg.KI_YAW,
+        cfg.KD_YAW,
         cfg.MAX_YAW_STICK_OUTPUT,
-        i_activation_error=cfg.YAW_I_ACTIVATION_ERROR
+        i_activation_error=cfg.YAW_I_ACTIVATION_ERROR,
     )
 
     # 初始化目标角度
@@ -154,16 +172,18 @@ def main():
     # 5. 初始化数据记录器
     logger = DataLogger(
         enabled=cfg.ENABLE_DATA_LOGGING,
-        field_set='yaw_only',
-        csv_name='yaw_control_data.csv',
-        subdir='yaw'
+        field_set="yaw_only",
+        csv_name="yaw_control_data.csv",
+        subdir="yaw",
     )
     if logger.enabled:
         console.print(f"[green]✓ 数据记录已启用: {logger.get_log_dir()}[/green]")
 
     console.print("\n[bold green]✓ 初始化完成！开始控制...[/bold green]")
     if cfg.USE_RANDOM_ANGLES:
-        console.print(f"[cyan]首个目标: 随机目标{target_index} - {target_yaw:.1f}°[/cyan]")
+        console.print(
+            f"[cyan]首个目标: 随机目标{target_index} - {target_yaw:.1f}°[/cyan]"
+        )
     else:
         console.print(f"[cyan]首个目标: 目标{target_index} - {target_yaw:.1f}°[/cyan]")
     console.print("[yellow]提示: 按Ctrl+C可随时退出[/yellow]\n")
@@ -202,13 +222,18 @@ def main():
                         f"[yellow]✗ 偏离目标 (误差:{error_yaw:+.2f}°)，重置稳定计时[/yellow]"
                     ),
                 )
-                if stable_duration is not None and stable_duration >= cfg.YAW_ARRIVAL_STABLE_TIME:
+                if (
+                    stable_duration is not None
+                    and stable_duration >= cfg.YAW_ARRIVAL_STABLE_TIME
+                ):
                     # 真正到达！
                     total_control_time = time.time() - control_start_time
 
                     # 计算下一个目标
                     if cfg.USE_RANDOM_ANGLES:
-                        next_target = generate_random_angle(target_yaw, cfg.RANDOM_ANGLE_MIN_DIFF)
+                        next_target = generate_random_angle(
+                            target_yaw, cfg.RANDOM_ANGLE_MIN_DIFF
+                        )
                         next_index = target_index + 1
                         target_desc = f"随机目标{next_index}"
                     else:
@@ -216,13 +241,21 @@ def main():
                         next_target = cfg.TARGET_YAWS[next_index]
                         target_desc = f"目标{next_index}"
 
-                    console.print(f"\n[bold green]✓ 已到达目标{target_index} - {target_yaw:.1f}°！[/bold green]")
-                    console.print(f"[dim]最终误差: {error_yaw:+.2f}° | 稳定时长: {stable_duration:.2f}s | 控制用时: {total_control_time:.2f}s[/dim]")
+                    console.print(
+                        f"\n[bold green]✓ 已到达目标{target_index} - {target_yaw:.1f}°！[/bold green]"
+                    )
+                    console.print(
+                        f"[dim]最终误差: {error_yaw:+.2f}° | 稳定时长: {stable_duration:.2f}s | 控制用时: {total_control_time:.2f}s[/dim]"
+                    )
 
                     if cfg.AUTO_NEXT_TARGET:
-                        console.print(f"[cyan]自动切换 → {target_desc} - {next_target:.1f}° (按Ctrl+C退出)[/cyan]\n")
+                        console.print(
+                            f"[cyan]自动切换 → {target_desc} - {next_target:.1f}° (按Ctrl+C退出)[/cyan]\n"
+                        )
                     else:
-                        console.print(f"[yellow]按 Enter 前往 {target_desc} - {next_target:.1f}°，或Ctrl+C退出...[/yellow]\n")
+                        console.print(
+                            f"[yellow]按 Enter 前往 {target_desc} - {next_target:.1f}°，或Ctrl+C退出...[/yellow]\n"
+                        )
 
                     # 悬停并重置PID
                     for _ in range(5):
@@ -237,7 +270,9 @@ def main():
                         # 自动模式：直接切换
                         target_index = next_index
                         target_yaw = next_target
-                        console.print(f"[bold cyan]→ {target_desc} - {target_yaw:.1f}°[/bold cyan]\n")
+                        console.print(
+                            f"[bold cyan]→ {target_desc} - {target_yaw:.1f}°[/bold cyan]\n"
+                        )
                         reached = False
                         control_start_time = time.time()
                     else:
@@ -246,7 +281,9 @@ def main():
                             input()
                             target_index = next_index
                             target_yaw = next_target
-                            console.print(f"[bold cyan]切换目标 → {target_desc} - {target_yaw:.1f}°[/bold cyan]\n")
+                            console.print(
+                                f"[bold cyan]切换目标 → {target_desc} - {target_yaw:.1f}°[/bold cyan]\n"
+                            )
                             reached = False
                             control_start_time = time.time()
                         except KeyboardInterrupt:
@@ -274,7 +311,7 @@ def main():
                 target_index=target_index,
                 yaw_pid_p=pid_components[0],
                 yaw_pid_i=pid_components[1],
-                yaw_pid_d=pid_components[2]
+                yaw_pid_d=pid_components[2],
             )
 
             # 每次循环都打印状态（实时监控杆量输出）
@@ -296,6 +333,7 @@ def main():
         console.print(f"\n\n[red]✗ 发生错误: {e}[/red]")
         console.print(f"[red]错误类型: {type(e).__name__}[/red]")
         import traceback
+
         console.print(f"[dim]{traceback.format_exc()}[/dim]\n")
     finally:
         console.print("[cyan]━━━ 清理资源 ━━━[/cyan]")
@@ -320,5 +358,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit(main())

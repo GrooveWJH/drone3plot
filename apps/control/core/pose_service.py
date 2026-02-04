@@ -1,4 +1,5 @@
 """Pose data listener for slam/position MQTT messages."""
+
 from __future__ import annotations
 
 import json
@@ -11,7 +12,9 @@ from pydjimqtt.core.mqtt_client import MQTTClient
 class PoseService:
     """Subscribe to pose/yaw topics and keep the latest payload."""
 
-    def __init__(self, client: MQTTClient, pose_topic: str | None, yaw_topic: str | None) -> None:
+    def __init__(
+        self, client: MQTTClient, pose_topic: str | None, yaw_topic: str | None
+    ) -> None:
         self.client = client
         self.pose_topic = (pose_topic or "").strip()
         self.yaw_topic = (yaw_topic or "").strip()
