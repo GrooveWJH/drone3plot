@@ -1,4 +1,5 @@
 """Telemetry aggregation service."""
+
 from __future__ import annotations
 
 import threading
@@ -41,7 +42,9 @@ class TelemetryService:
         if self._thread and self._thread.is_alive():
             return
         self._stop_event.clear()
-        self._thread = threading.Thread(target=self._run, name="telemetry-loop", daemon=True)
+        self._thread = threading.Thread(
+            target=self._run, name="telemetry-loop", daemon=True
+        )
         self._thread.start()
 
     def stop(self) -> None:
@@ -76,15 +79,27 @@ class TelemetryService:
         lat = self.client.get_latitude()
         lon = self.client.get_longitude()
         height = self.client.get_height()
-        relative_height = self.client.get_relative_height() if hasattr(self.client, "get_relative_height") else None
+        relative_height = (
+            self.client.get_relative_height()
+            if hasattr(self.client, "get_relative_height")
+            else None
+        )
         speed_tuple = self.client.get_speed() or (None, None, None, None)
         battery = self.client.get_battery_percent()
         osd_freq = self.client.get_osd_frequency()
-        is_online = self.client.is_online() if hasattr(self.client, "is_online") else True
+        is_online = (
+            self.client.is_online() if hasattr(self.client, "is_online") else True
+        )
         camera_osd = self.client.get_camera_osd_data() or {}
-        flight_mode_code = self.client.get_flight_mode() if hasattr(self.client, "get_flight_mode") else None
+        flight_mode_code = (
+            self.client.get_flight_mode()
+            if hasattr(self.client, "get_flight_mode")
+            else None
+        )
         flight_mode_label = (
-            self.client.get_flight_mode_name() if hasattr(self.client, "get_flight_mode_name") else "未知"
+            self.client.get_flight_mode_name()
+            if hasattr(self.client, "get_flight_mode_name")
+            else "未知"
         )
 
         camera_state = CameraState(
@@ -111,7 +126,11 @@ class TelemetryService:
             ),
         )
         snapshot.battery.percent = battery
-        snapshot.flight = FlightState(mode_code=flight_mode_code, mode_label=flight_mode_label)
+        snapshot.flight = FlightState(
+            mode_code=flight_mode_code, mode_label=flight_mode_label
+        )
         snapshot.camera = camera_state
-        snapshot.connection = ConnectionState(osd_frequency=osd_freq, is_online=is_online)
+        snapshot.connection = ConnectionState(
+            osd_frequency=osd_freq, is_online=is_online
+        )
         return snapshot

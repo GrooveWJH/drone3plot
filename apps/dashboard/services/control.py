@@ -1,4 +1,5 @@
 """Virtual stick command helpers."""
+
 from __future__ import annotations
 
 from pydjimqtt.core.mqtt_client import MQTTClient
@@ -22,7 +23,9 @@ class ControlService:
         pitch = self._map_axis(command.pitch)
         yaw = self._map_axis(command.yaw)
         throttle = self._map_axis(command.throttle)
-        send_stick_control(self.client, roll=roll, pitch=pitch, yaw=yaw, throttle=throttle)
+        send_stick_control(
+            self.client, roll=roll, pitch=pitch, yaw=yaw, throttle=throttle
+        )
         return {
             "roll": roll,
             "pitch": pitch,

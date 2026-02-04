@@ -12,7 +12,9 @@ def _aws_v4_signature(secret_key, date_stamp, region, service, string_to_sign):
     k_region = hmac.new(k_date, region.encode("utf-8"), hashlib.sha256).digest()
     k_service = hmac.new(k_region, service.encode("utf-8"), hashlib.sha256).digest()
     k_signing = hmac.new(k_service, b"aws4_request", hashlib.sha256).digest()
-    return hmac.new(k_signing, string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+    return hmac.new(
+        k_signing, string_to_sign.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
 
 
 def aws_v4_headers(
@@ -60,7 +62,9 @@ def aws_v4_headers(
             hashlib.sha256(canonical_request.encode("utf-8")).hexdigest(),
         ]
     )
-    signature = _aws_v4_signature(secret_key, date_stamp, region, service, string_to_sign)
+    signature = _aws_v4_signature(
+        secret_key, date_stamp, region, service, string_to_sign
+    )
     authorization = (
         "AWS4-HMAC-SHA256 "
         f"Credential={access_key}/{credential_scope}, "

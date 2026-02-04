@@ -1,4 +1,5 @@
 """Camera control endpoints."""
+
 from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, request

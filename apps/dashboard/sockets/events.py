@@ -1,4 +1,5 @@
 """Socket.IO event wiring."""
+
 from __future__ import annotations
 
 from flask import current_app
@@ -14,11 +15,13 @@ def register_socketio_events(socketio: SocketIO, registry: ServiceRegistry) -> N
     """Register namespaces and bootstrap telemetry push events."""
 
     if registry.telemetry:
-        registry.telemetry.subscribe(lambda snapshot: socketio.emit(
-            "telemetry",
-            snapshot.model_dump(),
-            namespace=TELEMETRY_NAMESPACE,
-        ))
+        registry.telemetry.subscribe(
+            lambda snapshot: socketio.emit(
+                "telemetry",
+                snapshot.model_dump(),
+                namespace=TELEMETRY_NAMESPACE,
+            )
+        )
 
     def _pose_loop():
         while True:

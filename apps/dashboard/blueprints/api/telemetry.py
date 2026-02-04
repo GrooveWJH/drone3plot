@@ -1,4 +1,5 @@
 """Telemetry API endpoints."""
+
 from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify
@@ -26,7 +27,9 @@ def pose_snapshot():
 def status():
     registry = current_app.extensions["services"]
     if not registry.is_connected or not registry.telemetry:
-        return jsonify({"osd_frequency": None, "online": False, "flight_mode": "未连接"}), 503
+        return jsonify(
+            {"osd_frequency": None, "online": False, "flight_mode": "未连接"}
+        ), 503
     snapshot = registry.telemetry.latest()
     payload = {
         "osd_frequency": snapshot.connection.osd_frequency,

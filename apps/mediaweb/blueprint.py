@@ -69,13 +69,20 @@ def _build_s3_headers(
     )
 
 
-def _s3_request(config: MediaWebConfig, method: str, object_key: str, payload: bytes = b"") -> tuple[int, bytes, Any]:
+def _s3_request(
+    config: MediaWebConfig, method: str, object_key: str, payload: bytes = b""
+) -> tuple[int, bytes, Any]:
     scheme, host = _parse_storage_endpoint(config.storage_endpoint)
     path = f"/{config.storage_bucket}/{object_key.lstrip('/')}"
     canonical_uri = _encode_path(path)
     url = f"{scheme}://{host}{canonical_uri}"
     headers = _build_s3_headers(config, method, canonical_uri, payload)
-    req = Request(url, data=payload if method in {"PUT", "POST"} else None, headers=headers, method=method)
+    req = Request(
+        url,
+        data=payload if method in {"PUT", "POST"} else None,
+        headers=headers,
+        method=method,
+    )
     with urlopen(req, timeout=30) as resp:
         return resp.status, resp.read(), resp.headers
 
@@ -123,7 +130,9 @@ def create_media_blueprint(config: MediaWebConfig) -> Blueprint:
     )
 
     def _row_to_item(row: sqlite3.Row) -> dict[str, Any]:
-        created = datetime.fromtimestamp(row["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
+        created = datetime.fromtimestamp(row["created_at"]).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         return {**dict(row), "created_at": created}
 
     @bp.route("/")
@@ -136,7 +145,9 @@ def create_media_blueprint(config: MediaWebConfig) -> Blueprint:
         except Exception as exc:
             items = []
             error_message = _resolve_db_error(config.db_path, exc)
-        return render_template("index.html", items=items, api_base=api_base, error_message=error_message)
+        return render_template(
+            "index.html", items=items, api_base=api_base, error_message=error_message
+        )
 
     @bp.route("/api/media")
     def api_media():

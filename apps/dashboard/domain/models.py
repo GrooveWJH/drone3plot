@@ -1,4 +1,5 @@
 """Domain models shared across services, API, and sockets."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

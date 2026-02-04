@@ -43,4 +43,3 @@ TRANSITIONS = {
     (DrcState.ERROR, DrcEvent.REQUESTED): DrcState.WAITING,
     (DrcState.ERROR, DrcEvent.RESET): DrcState.IDLE,
 }
-

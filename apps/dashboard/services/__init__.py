@@ -1,4 +1,5 @@
 """Service registry wiring SDK adapters into the Flask app."""
+
 from __future__ import annotations
 
 from typing import Any, Mapping
@@ -41,9 +42,13 @@ class ServiceRegistry:
             raise RuntimeError("MQTT client failed to initialize")
         poll_hz = float(self.config.get("TELEMETRY_POLL_HZ", 2))
         self.telemetry = TelemetryService(self.mqtt_client, poll_hz=poll_hz)
-        self.camera = CameraService(self.mqtt_client, tuple(self.config.get("AVAILABLE_LENSES", ("zoom",))))
+        self.camera = CameraService(
+            self.mqtt_client, tuple(self.config.get("AVAILABLE_LENSES", ("zoom",)))
+        )
         self.control = ControlService(self.mqtt_client)
-        if isinstance(self.service_caller, ServiceCaller) and isinstance(self.mqtt_client, MQTTClient):
+        if isinstance(self.service_caller, ServiceCaller) and isinstance(
+            self.mqtt_client, MQTTClient
+        ):
             self.streaming = StreamingService(
                 self.service_caller,
                 self.mqtt_client,

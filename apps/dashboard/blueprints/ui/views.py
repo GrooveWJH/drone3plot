@@ -1,4 +1,5 @@
 """Server-rendered dashboard views."""
+
 from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, render_template
@@ -28,8 +29,10 @@ def dashboard():
 def healthcheck():
     registry = current_app.extensions["services"]
     status = registry.telemetry.latest()
-    return jsonify({
-        "ok": True,
-        "online": status.connection.is_online,
-        "mode": status.flight.mode_label,
-    })
+    return jsonify(
+        {
+            "ok": True,
+            "online": status.connection.is_online,
+            "mode": status.flight.mode_label,
+        }
+    )

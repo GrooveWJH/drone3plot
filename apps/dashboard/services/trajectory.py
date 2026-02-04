@@ -1,4 +1,5 @@
 """Trajectory ingest + MQTT relay service."""
+
 from __future__ import annotations
 
 import json
@@ -12,7 +13,9 @@ from pydjimqtt.core.mqtt_client import MQTTClient
 class TrajectoryService:
     """Keeps latest trajectory received from MQTT and relays HTTP payloads to MQTT."""
 
-    def __init__(self, client: MQTTClient, topic: str, publish_rate: float = 1.0) -> None:
+    def __init__(
+        self, client: MQTTClient, topic: str, publish_rate: float = 1.0
+    ) -> None:
         self.client = client
         self.topic = (topic or "uav/trajectory").strip()
         self.publish_interval = 1.0 / max(publish_rate, 0.1)

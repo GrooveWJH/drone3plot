@@ -1,4 +1,5 @@
 """Dashboard application factory."""
+
 from __future__ import annotations
 
 import atexit
@@ -32,17 +33,20 @@ def create_app(config_name: str | None = None) -> Flask:
 
     _inject_pydjimqtt_path()
     from dashboard.services import ServiceRegistry
+
     base_path = Path(__file__).resolve().parent
-    app = Flask(__name__, static_folder=str(base_path / "static"),
-                template_folder=str(base_path / "templates"))
+    app = Flask(
+        __name__,
+        static_folder=str(base_path / "static"),
+        template_folder=str(base_path / "templates"),
+    )
     config_class = get_config(config_name)
     app.config.from_object(config_class)
     app.config["CONFIG_FILE_LOADED"] = CONFIG_FILE_LOADED
     app.config["CONFIG_FILE_PATH"] = CONFIG_FILE_PATH
 
     cors_origins = app.config.get("CORS_ORIGINS", "*")
-    socketio.init_app(app, async_mode="threading",
-                      cors_allowed_origins=cors_origins)
+    socketio.init_app(app, async_mode="threading", cors_allowed_origins=cors_origins)
 
     registry = ServiceRegistry(app.config)
     app.extensions["services"] = registry
@@ -67,8 +71,13 @@ def create_app(config_name: str | None = None) -> Flask:
                 registry.shutdown()
                 logger.warning("[mqtt] auto-connect failed: %s", exc)
                 time.sleep(1.0)
-        logger.warning("[mqtt] auto-connect aborted after %d failures; wait for control request", max_attempts)
+        logger.warning(
+            "[mqtt] auto-connect aborted after %d failures; wait for control request",
+            max_attempts,
+        )
 
-    threading.Thread(target=_auto_connect, name="mqtt-auto-connect", daemon=True).start()
+    threading.Thread(
+        target=_auto_connect, name="mqtt-auto-connect", daemon=True
+    ).start()
 
     return app

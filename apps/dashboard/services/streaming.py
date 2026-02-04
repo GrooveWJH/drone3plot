@@ -1,4 +1,5 @@
 """Live streaming helpers."""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -28,7 +29,9 @@ class StreamingService:
     def video_id(self) -> Optional[str]:
         return self._video_id
 
-    def start(self, rtmp_url: str, video_index: str | None = None, quality: int | None = None) -> Optional[str]:
+    def start(
+        self, rtmp_url: str, video_index: str | None = None, quality: int | None = None
+    ) -> Optional[str]:
         video_id = start_live(
             self.caller,
             self.client,

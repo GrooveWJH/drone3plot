@@ -1,4 +1,5 @@
 """DRC control flow helpers for web-driven confirmation."""
+
 from __future__ import annotations
 
 import threading
@@ -56,7 +57,9 @@ class DrcControlService:
                 except Exception:
                     is_online = True
             if not is_online and self._state != DrcState.WAITING:
-                print("DrcControlService.status(): MQTT client offline, resetting state.")
+                print(
+                    "DrcControlService.status(): MQTT client offline, resetting state."
+                )
                 self._transition(DrcEvent.OFFLINE)
                 self._last_error = None
                 if self._heartbeat_thread:
@@ -64,7 +67,9 @@ class DrcControlService:
                     self._heartbeat_thread = None
             return {"state": self._state.value, "last_error": self._last_error}
 
-    def request_control(self, user_id: Optional[str] = None, user_callsign: Optional[str] = None) -> Dict[str, Optional[str]]:
+    def request_control(
+        self, user_id: Optional[str] = None, user_callsign: Optional[str] = None
+    ) -> Dict[str, Optional[str]]:
         with self._lock:
             if self._state in {DrcState.WAITING, DrcState.READY}:
                 return {"state": self._state.value, "last_error": self._last_error}
@@ -118,7 +123,9 @@ class DrcControlService:
             )
             if self._heartbeat_thread:
                 stop_heartbeat(self._heartbeat_thread)
-            self._heartbeat_thread = start_heartbeat(self.client, interval=self.heartbeat_interval)
+            self._heartbeat_thread = start_heartbeat(
+                self.client, interval=self.heartbeat_interval
+            )
         except Exception as exc:
             with self._lock:
                 self._transition(DrcEvent.CONFIRM_FAILED)

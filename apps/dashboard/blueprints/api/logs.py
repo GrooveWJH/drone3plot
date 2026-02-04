@@ -1,5 +1,5 @@
-
 """Client-side log collection endpoints."""
+
 from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, request

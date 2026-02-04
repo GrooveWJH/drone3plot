@@ -1,4 +1,5 @@
 """Application configuration objects."""
+
 from __future__ import annotations
 
 import os
@@ -50,13 +51,17 @@ class BaseConfig:
     DRC_USER_CALLSIGN: str = os.getenv("DJI_USER_CALLSIGN", "Pilot 0")
     DRC_OSD_FREQUENCY: int = int(os.getenv("DJI_DRC_OSD_FREQUENCY", "30"))
     DRC_HSI_FREQUENCY: int = int(os.getenv("DJI_DRC_HSI_FREQUENCY", "10"))
-    DRC_HEARTBEAT_INTERVAL: float = float(os.getenv("DJI_DRC_HEARTBEAT_INTERVAL", "1.0"))
+    DRC_HEARTBEAT_INTERVAL: float = float(
+        os.getenv("DJI_DRC_HEARTBEAT_INTERVAL", "1.0")
+    )
     SLAM_POSE_TOPIC: str = os.getenv("DJI_SLAM_POSE_TOPIC", "slam/position")
     SLAM_YAW_TOPIC: str = os.getenv("DJI_SLAM_YAW_TOPIC", "slam/yaw")
     SLAM_STATUS_TOPIC: str = os.getenv("DJI_SLAM_STATUS_TOPIC", "slam/status")
     SLAM_FREQUENCY_TOPIC: str = os.getenv("DJI_SLAM_FREQUENCY_TOPIC", "slam/frequency")
     TRAJECTORY_MQTT_TOPIC: str = os.getenv("DJI_TRAJECTORY_TOPIC", "uav/trajectory")
-    TRAJECTORY_PUBLISH_RATE: float = float(os.getenv("DJI_TRAJECTORY_PUBLISH_RATE", "1"))
+    TRAJECTORY_PUBLISH_RATE: float = float(
+        os.getenv("DJI_TRAJECTORY_PUBLISH_RATE", "1")
+    )
     TELEMETRY_POLL_HZ: float = float(os.getenv("TELEMETRY_POLL_HZ", "2"))
     SOCKET_RATE_LIMIT: float = float(os.getenv("TELEMETRY_SOCKET_RATE", "0.5"))
     POSE_SOCKET_RATE: float = float(os.getenv("POSE_SOCKET_RATE", "0.2"))
@@ -70,7 +75,7 @@ class DevelopmentConfig(BaseConfig):
 
 class ProductionConfig(BaseConfig):
     DEBUG: bool = False
-    
+
 
 _CONFIG_MAP: dict[str | None, Type[BaseConfig]] = {
     None: DevelopmentConfig,

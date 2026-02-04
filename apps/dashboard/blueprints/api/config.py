@@ -1,4 +1,5 @@
 """Configuration endpoints."""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Mapping
@@ -9,8 +10,10 @@ from dashboard.services import ServiceRegistry
 
 bp = Blueprint("config_api", __name__)
 
+
 def _parse_int(value: Any) -> int:
     return int(value)
+
 
 CONFIG_FIELDS: dict[str, tuple[str, Callable[[Any], Any]]] = {
     "DJI_GATEWAY_SN": ("GATEWAY_SN", str),
@@ -19,6 +22,7 @@ CONFIG_FIELDS: dict[str, tuple[str, Callable[[Any], Any]]] = {
     "DJI_MQTT_USERNAME": ("MQTT_USERNAME", str),
     "DJI_MQTT_PASSWORD": ("MQTT_PASSWORD", str),
 }
+
 
 def _serialize_config(app_config: Mapping[str, Any]) -> dict[str, Any]:
     payload: dict[str, Any] = {
@@ -32,9 +36,11 @@ def _serialize_config(app_config: Mapping[str, Any]) -> dict[str, Any]:
         payload[env_key] = value
     return payload
 
+
 @bp.get("/config")
 def get_config_values():
     return jsonify(_serialize_config(current_app.config))
+
 
 @bp.post("/config")
 def update_config_values():
@@ -59,7 +65,9 @@ def update_config_values():
         if registry.is_connected:
             return jsonify({"error": "Cannot update config while connected."}), 409
         registry.reconfigure(current_app.config)
-    return jsonify({
-        "status": "ok",
-        "config": _serialize_config(current_app.config),
-    })
+    return jsonify(
+        {
+            "status": "ok",
+            "config": _serialize_config(current_app.config),
+        }
+    )
