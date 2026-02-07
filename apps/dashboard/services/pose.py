@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 import threading
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from pydjimqtt.core.mqtt_client import MQTTClient
 
@@ -29,13 +30,13 @@ class PoseService:
         self.status_topic = (status_topic or "").strip()
         self.frequency_topic = (frequency_topic or "").strip()
         self._lock = threading.Lock()
-        self._pose: Dict[str, Optional[float]] = {
+        self._pose: dict[str, Optional[float]] = {
             "x": None,
             "y": None,
             "z": None,
             "yaw": None,
         }
-        self._frequency: Dict[str, Optional[float]] = {
+        self._frequency: dict[str, Optional[float]] = {
             "rostopic": None,
             "mqtt": None,
             "timestamp": None,
@@ -55,6 +56,7 @@ class PoseService:
     def _attach_listener(self) -> None:
         if not self.client.client:
             return
+        logger = logging.getLogger("dashboard")
         self._original_on_message = self.client.client.on_message
 
         def on_message(client, userdata, msg):
@@ -72,19 +74,23 @@ class PoseService:
         self.client.client.on_message = on_message
         if self.pose_topic:
             self.client.client.subscribe(self.pose_topic, qos=0)
+            logger.info("[slam] subscribed pose topic: %s", self.pose_topic)
         if self.yaw_topic:
             self.client.client.subscribe(self.yaw_topic, qos=0)
+            logger.info("[slam] subscribed yaw topic: %s", self.yaw_topic)
         if self.status_topic:
             self.client.client.subscribe(self.status_topic, qos=0)
+            logger.info("[slam] subscribed status topic: %s", self.status_topic)
         if self.frequency_topic:
             self.client.client.subscribe(self.frequency_topic, qos=0)
+            logger.info("[slam] subscribed frequency topic: %s", self.frequency_topic)
 
     def _handle_pose(self, raw_payload: bytes) -> None:
         try:
             payload = json.loads(raw_payload.decode())
         except Exception:
             return
-        data: Dict[str, Any] = payload.get("data", payload)
+        data: dict[str, Any] = payload.get("data", payload)
         x = data.get("x")
         y = data.get("y")
         z = data.get("z")
@@ -99,7 +105,7 @@ class PoseService:
             payload = json.loads(raw_payload.decode())
         except Exception:
             return
-        data: Dict[str, Any] = payload.get("data", payload)
+        data: dict[str, Any] = payload.get("data", payload)
         yaw = data.get("yaw")
         with self._lock:
             self._pose["yaw"] = _to_float(yaw)
@@ -110,7 +116,7 @@ class PoseService:
             payload = json.loads(raw_payload.decode())
         except Exception:
             return
-        data: Dict[str, Any] = payload.get("data", payload)
+        data: dict[str, Any] = payload.get("data", payload)
         status = data.get("status")
         if status is None:
             return
@@ -122,7 +128,7 @@ class PoseService:
             payload = json.loads(raw_payload.decode())
         except Exception:
             return
-        data: Dict[str, Any] = payload.get("data", payload)
+        data: dict[str, Any] = payload.get("data", payload)
         mqtt_rate = _to_float(data.get("mqtt"))
         rostopic_rate = _to_float(data.get("rostopic"))
         timestamp = _to_float(data.get("timestamp"))
@@ -131,9 +137,14 @@ class PoseService:
             self._frequency["rostopic"] = rostopic_rate
             self._frequency["timestamp"] = timestamp
 
-    def latest(self) -> Dict[str, Optional[float] | Optional[str]]:
+    def latest(self) -> dict[str, Any]:
         with self._lock:
-            payload = dict(self._pose)
+            payload: dict[str, Any] = {
+                "x": self._pose["x"],
+                "y": self._pose["y"],
+                "z": self._pose["z"],
+                "yaw": self._pose["yaw"],
+            }
             last_update = max(self._last_pose_at, self._last_yaw_at)
             is_stale = (last_update == 0.0) or (
                 time.monotonic() - last_update > self.STALE_AFTER_SEC

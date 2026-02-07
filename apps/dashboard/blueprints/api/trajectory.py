@@ -7,8 +7,6 @@ from typing import Any, Dict, List
 
 from flask import Blueprint, current_app, jsonify, request
 
-from dashboard.services import ServiceRegistry
-
 bp = Blueprint("trajectory_api", __name__)
 
 
@@ -25,7 +23,7 @@ def _coerce_point(entry: Any) -> Dict[str, Any] | None:
             "y": _parse_float(entry.get("y")),
             "z": _parse_float(entry.get("z")),
             "yaw": _parse_float(entry.get("yaw")),
-            "takePhoto": bool(entry.get("takePhoto")),
+            "takePhoto": bool(entry.get("takePhoto", True)),
         }
     except (TypeError, ValueError):
         return None
@@ -52,33 +50,55 @@ def update_trajectory():
         "points": points,
     }
 
-    registry: ServiceRegistry | None = current_app.extensions.get("services")
-    if not registry or not registry.trajectory:
-        return jsonify({"error": "Trajectory service unavailable."}), 503
+    mission_executor = current_app.extensions["mission_executor"]
+    draft = mission_executor.update_draft(trajectory_payload)
 
-    registry.trajectory.set_http_payload(trajectory_payload)
-    return jsonify({"status": "ok", "points": len(points)})
+    published = False
+    hub = current_app.extensions["runtime_hub"]
+    if hub.drone.connected and hub.drone.trajectory:
+        hub.drone.trajectory.set_http_payload(trajectory_payload)
+        published = True
+
+    return jsonify(
+        {
+            "status": "ok",
+            "points": len(points),
+            "published": published,
+            "draft": draft,
+        }
+    )
 
 
 @bp.get("/trajectory")
 def get_trajectory():
-    registry: ServiceRegistry | None = current_app.extensions.get("services")
-    if not registry or not registry.trajectory:
-        return jsonify({"error": "Trajectory service unavailable."}), 503
-    payload, received_at = registry.trajectory.latest()
-    return jsonify({"payload": payload, "received_at": received_at})
+    mission_executor = current_app.extensions["mission_executor"]
+    draft = mission_executor.get_draft()
+
+    hub = current_app.extensions["runtime_hub"]
+    payload = None
+    received_at = None
+    if hub.drone.connected and hub.drone.trajectory:
+        payload, received_at = hub.drone.trajectory.latest()
+
+    return jsonify(
+        {
+            "payload": payload,
+            "received_at": received_at,
+            "draft": draft,
+        }
+    )
 
 
 @bp.post("/trajectory/execute")
 def execute_trajectory():
-    registry: ServiceRegistry | None = current_app.extensions.get("services")
-    if not registry or not registry.trajectory:
-        return jsonify({"error": "Trajectory service unavailable."}), 503
-    payload, received_at = registry.trajectory.latest()
-    if not payload or not payload.get("points"):
-        return jsonify({"error": "No trajectory available from MQTT."}), 409
-
-    points = payload.get("points", [])
-    print(f"[trajectory] execute start: {len(points)} points")
-    print("[trajectory] execute completed")
-    return jsonify({"status": "ok", "points": len(points), "received_at": received_at})
+    mission_executor = current_app.extensions["mission_executor"]
+    current_app.logger.warning(
+        "[deprecation] POST /api/trajectory/execute -> use /api/mission/start"
+    )
+    try:
+        run_id = mission_executor.start({})
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except RuntimeError as exc:
+        return jsonify({"error": str(exc)}), 409
+    return jsonify({"status": "started", "run_id": run_id, "mission": mission_executor.status()})

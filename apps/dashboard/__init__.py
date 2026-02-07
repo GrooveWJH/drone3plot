@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import atexit
 import logging
+import os
 import threading
 import time
 from pathlib import Path
@@ -16,6 +17,8 @@ from dashboard.blueprints.ui import ui_bp
 from dashboard.config import CONFIG_FILE_LOADED, CONFIG_FILE_PATH, get_config
 from dashboard.extensions import socketio
 from dashboard.sockets.events import register_socketio_events
+from dashboard.services.mission_executor import MissionExecutor
+from dashboard.services.runtime_hub import RuntimeHub
 
 
 def _inject_pydjimqtt_path() -> None:
@@ -32,8 +35,6 @@ def create_app(config_name: str | None = None) -> Flask:
     """Application factory used by both CLI and WSGI servers."""
 
     _inject_pydjimqtt_path()
-    from dashboard.services import ServiceRegistry
-
     base_path = Path(__file__).resolve().parent
     app = Flask(
         __name__,
@@ -48,36 +49,47 @@ def create_app(config_name: str | None = None) -> Flask:
     cors_origins = app.config.get("CORS_ORIGINS", "*")
     socketio.init_app(app, async_mode="threading", cors_allowed_origins=cors_origins)
 
-    registry = ServiceRegistry(app.config)
-    app.extensions["services"] = registry
+    runtime_hub = RuntimeHub(app.config)
+    mission_executor = MissionExecutor(runtime_hub, app.config)
+    app.extensions["runtime_hub"] = runtime_hub
+    app.extensions["mission_executor"] = mission_executor
 
     app.register_blueprint(ui_bp, url_prefix="/dashboard")
     app.register_blueprint(api_bp)
 
-    register_socketio_events(socketio, registry)
+    register_socketio_events(socketio, runtime_hub, mission_executor)
 
-    atexit.register(registry.shutdown)
+    def _shutdown_background() -> None:
+        mission_executor.shutdown()
+        runtime_hub.stop_all()
+
+    atexit.register(_shutdown_background)
 
     def _auto_connect() -> None:
         logger = logging.getLogger("dashboard")
-        max_attempts = 3
-        for attempt in range(1, max_attempts + 1):
+        attempt = 0
+        while True:
+            attempt += 1
             try:
-                logger.info("[mqtt] auto-connect attempt %d/%d", attempt, max_attempts)
-                registry.connect()
-                logger.info("[mqtt] auto-connect succeeded")
+                logger.info("[slam] auto-connect attempt %d", attempt)
+                runtime_hub.start_slam()
+                logger.info("[slam] auto-connect succeeded")
                 return
             except Exception as exc:
-                registry.shutdown()
-                logger.warning("[mqtt] auto-connect failed: %s", exc)
-                time.sleep(1.0)
-        logger.warning(
-            "[mqtt] auto-connect aborted after %d failures; wait for control request",
-            max_attempts,
-        )
+                runtime_hub.slam.stop()
+                logger.warning("[slam] auto-connect failed: %s", exc)
+                time.sleep(2.0)
 
-    threading.Thread(
-        target=_auto_connect, name="mqtt-auto-connect", daemon=True
-    ).start()
+    def _should_start_auto_connect() -> bool:
+        # In debug mode, Werkzeug reloader starts a parent watcher process and a
+        # child serving process. Only start background workers in the child.
+        if not app.debug:
+            return True
+        return os.environ.get("WERKZEUG_RUN_MAIN") == "true"
+
+    if _should_start_auto_connect():
+        threading.Thread(
+            target=_auto_connect, name="mqtt-auto-connect", daemon=True
+        ).start()
 
     return app

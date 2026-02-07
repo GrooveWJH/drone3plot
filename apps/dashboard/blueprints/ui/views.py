@@ -9,13 +9,20 @@ ui_bp = Blueprint("ui", __name__)
 
 @ui_bp.get("/")
 def dashboard():
+    hub = current_app.extensions["runtime_hub"]
+    active = hub.get_drone_config()
     config = current_app.config
+    mqtt_port = active.get("MQTT_PORT")
+    if not isinstance(mqtt_port, int) or mqtt_port <= 0:
+        mqtt_port = ""
     config_values = {
-        "DJI_GATEWAY_SN": config.get("GATEWAY_SN", ""),
-        "DJI_MQTT_HOST": config.get("MQTT_HOST", ""),
-        "DJI_MQTT_PORT": config.get("MQTT_PORT", 1883),
-        "DJI_MQTT_USERNAME": config.get("MQTT_USERNAME", ""),
-        "DJI_MQTT_PASSWORD": config.get("MQTT_PASSWORD", ""),
+        "DJI_GATEWAY_SN": active.get("GATEWAY_SN", ""),
+        "DJI_MQTT_HOST": active.get("MQTT_HOST", ""),
+        "DJI_MQTT_PORT": mqtt_port,
+        "DJI_MQTT_USERNAME": active.get("MQTT_USERNAME", ""),
+        "DJI_MQTT_PASSWORD": active.get("MQTT_PASSWORD", ""),
+        "DJI_USER_ID": active.get("DRC_USER_ID", ""),
+        "DJI_USER_CALLSIGN": active.get("DRC_USER_CALLSIGN", ""),
     }
     return render_template(
         "dashboard/index.html",
@@ -27,8 +34,10 @@ def dashboard():
 
 @ui_bp.get("/health")
 def healthcheck():
-    registry = current_app.extensions["services"]
-    status = registry.telemetry.latest()
+    hub = current_app.extensions["runtime_hub"]
+    if not hub.drone.connected or not hub.drone.telemetry:
+        return jsonify({"ok": True, "online": False, "mode": "未连接"})
+    status = hub.drone.telemetry.latest()
     return jsonify(
         {
             "ok": True,

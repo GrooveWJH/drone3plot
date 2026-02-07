@@ -19,7 +19,7 @@ def _ensure_import_paths() -> None:
 def main() -> None:
     _ensure_import_paths()
     from server import create_app
-    from server.config import SERVER_CONFIG, apply_dashboard_env
+    from server.config import SERVER_CONFIG
     from dashboard.extensions import socketio  # type: ignore[import-not-found]
 
     parser = argparse.ArgumentParser(description="Drone3Plot server")
@@ -36,7 +36,6 @@ def main() -> None:
     if log_level != "debug":
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
-    apply_dashboard_env()
     app = create_app()
     if log_level != "debug":
         app.logger.setLevel(logging.WARNING)

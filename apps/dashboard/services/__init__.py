@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Mapping
 
 from pydjimqtt.core import MQTTClient, ServiceCaller
@@ -17,6 +18,9 @@ from .telemetry import TelemetryService
 
 class ServiceRegistry:
     """Central place to access initialized services."""
+
+    LOCAL_SLAM_GATEWAY_SN = "__local_slam__"
+    POSE_SLAM_GATEWAY_SN = "__pose_slam_local__"
 
     def __init__(self, app_config: Mapping[str, Any]):
         self.config = app_config
@@ -37,9 +41,11 @@ class ServiceRegistry:
     def bootstrap(self) -> None:
         if self._bootstrapped:
             return
+        logger = logging.getLogger("dashboard")
         self._init_clients()
         if not self.mqtt_client:
             raise RuntimeError("MQTT client failed to initialize")
+        gateway_sn = self._resolve_gateway_sn()
         poll_hz = float(self.config.get("TELEMETRY_POLL_HZ", 2))
         self.telemetry = TelemetryService(self.mqtt_client, poll_hz=poll_hz)
         self.camera = CameraService(
@@ -56,15 +62,22 @@ class ServiceRegistry:
                 self.config.get("DEFAULT_VIDEO_QUALITY", 0),
             )
             pose_config = {
-                "host": self.config.get("MQTT_HOST"),
-                "port": self.config.get("MQTT_PORT"),
-                "username": self.config.get("MQTT_USERNAME"),
-                "password": self.config.get("MQTT_PASSWORD"),
+                "host": self.config.get("SLAM_MQTT_HOST", "127.0.0.1"),
+                "port": int(self.config.get("SLAM_MQTT_PORT", 1883)),
+                "username": self.config.get("SLAM_MQTT_USERNAME", ""),
+                "password": self.config.get("SLAM_MQTT_PASSWORD", ""),
             }
-            self.pose_client = MQTTClient(self.config.get("GATEWAY_SN"), pose_config)
+            self.pose_client = MQTTClient(self.POSE_SLAM_GATEWAY_SN, pose_config)
             self.pose_client.connect()
             self.pose = PoseService(
                 self.pose_client,
+                self.config.get("SLAM_POSE_TOPIC"),
+                self.config.get("SLAM_YAW_TOPIC"),
+                self.config.get("SLAM_STATUS_TOPIC"),
+                self.config.get("SLAM_FREQUENCY_TOPIC"),
+            )
+            logger.info(
+                "[slam] pose_topic=%r yaw_topic=%r status_topic=%r freq_topic=%r",
                 self.config.get("SLAM_POSE_TOPIC"),
                 self.config.get("SLAM_YAW_TOPIC"),
                 self.config.get("SLAM_STATUS_TOPIC"),
@@ -84,8 +97,9 @@ class ServiceRegistry:
                     "username": self.config.get("MQTT_USERNAME"),
                     "password": self.config.get("MQTT_PASSWORD"),
                 },
-                user_id=self.config.get("DRC_USER_ID", "pilot"),
-                user_callsign=self.config.get("DRC_USER_CALLSIGN", "Cloud Pilot"),
+                is_local_slam_mode=(gateway_sn == self.LOCAL_SLAM_GATEWAY_SN),
+                user_id=str(self.config.get("DRC_USER_ID", "") or ""),
+                user_callsign=str(self.config.get("DRC_USER_CALLSIGN", "") or ""),
                 osd_frequency=self.config.get("DRC_OSD_FREQUENCY", 30),
                 hsi_frequency=self.config.get("DRC_HSI_FREQUENCY", 10),
                 heartbeat_interval=self.config.get("DRC_HEARTBEAT_INTERVAL", 1.0),
@@ -155,13 +169,38 @@ class ServiceRegistry:
     # Internal helpers -------------------------------------------------
 
     def _init_clients(self) -> None:
+        self._validate_required_connection_config()
+        gateway_sn = self._resolve_gateway_sn()
         mqtt_config = {
             "host": self.config.get("MQTT_HOST"),
             "port": self.config.get("MQTT_PORT"),
             "username": self.config.get("MQTT_USERNAME"),
             "password": self.config.get("MQTT_PASSWORD"),
         }
-        client = MQTTClient(self.config.get("GATEWAY_SN"), mqtt_config)
+        client = MQTTClient(gateway_sn, mqtt_config)
         client.connect()
         self.mqtt_client = client
         self.service_caller = ServiceCaller(client)
+
+    def _validate_required_connection_config(self) -> None:
+        mqtt_host = str(self.config.get("MQTT_HOST", "")).strip()
+        mqtt_port_raw = self.config.get("MQTT_PORT", 0)
+        try:
+            mqtt_port = int(mqtt_port_raw)
+        except (TypeError, ValueError):
+            mqtt_port = 0
+
+        missing = []
+        if not mqtt_host:
+            missing.append("MQTT_HOST")
+        if mqtt_port <= 0:
+            missing.append("MQTT_PORT")
+        if missing:
+            joined = ", ".join(missing)
+            raise RuntimeError(f"Missing required MQTT config: {joined}")
+
+    def _resolve_gateway_sn(self) -> str:
+        gateway_sn = str(self.config.get("GATEWAY_SN", "")).strip()
+        if gateway_sn:
+            return gateway_sn
+        return self.LOCAL_SLAM_GATEWAY_SN

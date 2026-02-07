@@ -6,7 +6,7 @@ from flask import Flask, abort, send_file
 
 from dashboard import create_app as create_dashboard_app
 from dashboard.extensions import socketio
-from .config import MEDIA_CONFIG, SERVER_CONFIG, apply_dashboard_env
+from .config import MEDIA_CONFIG, SERVER_CONFIG
 from mediaweb.blueprint import MediaWebConfig, create_media_blueprint
 
 
@@ -14,7 +14,6 @@ DIST_DIR = Path(__file__).resolve().parents[1] / "apps" / "frontend" / "dist"
 
 
 def create_app() -> Flask:
-    apply_dashboard_env()
     app = create_dashboard_app()
     media_config = MediaWebConfig(
         db_path=MEDIA_CONFIG.db_path,

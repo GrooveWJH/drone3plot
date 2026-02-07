@@ -24,6 +24,7 @@ class DrcControlService:
         caller: ServiceCaller,
         mqtt_config: Dict[str, Any],
         *,
+        is_local_slam_mode: bool = False,
         user_id: str,
         user_callsign: str,
         osd_frequency: int = 30,
@@ -33,6 +34,7 @@ class DrcControlService:
         self.client = client
         self.caller = caller
         self.mqtt_config = mqtt_config
+        self.is_local_slam_mode = is_local_slam_mode
         self.default_user_id = user_id
         self.default_callsign = user_callsign
         self.osd_frequency = osd_frequency
@@ -50,21 +52,23 @@ class DrcControlService:
 
     def status(self) -> Dict[str, Optional[str]]:
         with self._lock:
-            is_online = True
-            if hasattr(self.client, "is_online"):
+            if self.is_local_slam_mode:
+                return {"state": self._state.value, "last_error": self._last_error}
+            # Keep status() side-effect free: state polling must not stop heartbeat.
+            # Heartbeat lifecycle is controlled only by confirm_control()/shutdown().
+            mqtt_connected = True
+            raw_client = getattr(self.client, "client", None)
+            if raw_client and hasattr(raw_client, "is_connected"):
                 try:
-                    is_online = self.client.is_online(timeout=3.0)
+                    mqtt_connected = bool(raw_client.is_connected())
                 except Exception:
-                    is_online = True
-            if not is_online and self._state != DrcState.WAITING:
-                print(
-                    "DrcControlService.status(): MQTT client offline, resetting state."
-                )
+                    mqtt_connected = True
+            if not mqtt_connected and self._state not in {
+                DrcState.IDLE,
+                DrcState.WAITING,
+            }:
                 self._transition(DrcEvent.OFFLINE)
-                self._last_error = None
-                if self._heartbeat_thread:
-                    stop_heartbeat(self._heartbeat_thread)
-                    self._heartbeat_thread = None
+                self._last_error = "MQTT disconnected."
             return {"state": self._state.value, "last_error": self._last_error}
 
     def request_control(
@@ -77,6 +81,25 @@ class DrcControlService:
 
         resolved_user_id = user_id or self.default_user_id
         resolved_callsign = user_callsign or self.default_callsign
+        if self.is_local_slam_mode:
+            with self._lock:
+                self._transition(DrcEvent.REQUEST_FAILED)
+                self._last_error = (
+                    "Missing GATEWAY_SN. Set it in dashboard before requesting DRC."
+                )
+                return {"state": self._state.value, "last_error": self._last_error}
+        if not str(resolved_user_id or "").strip():
+            with self._lock:
+                self._transition(DrcEvent.REQUEST_FAILED)
+                self._last_error = "Missing DRC user id. Please configure DJI_USER_ID."
+                return {"state": self._state.value, "last_error": self._last_error}
+        if not str(resolved_callsign or "").strip():
+            with self._lock:
+                self._transition(DrcEvent.REQUEST_FAILED)
+                self._last_error = (
+                    "Missing DRC user callsign. Please configure DJI_USER_CALLSIGN."
+                )
+                return {"state": self._state.value, "last_error": self._last_error}
         print(
             "[drc] cloud_control_auth_request params: "
             f"user_id={resolved_user_id}, user_callsign={resolved_callsign}, "

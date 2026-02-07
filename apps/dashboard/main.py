@@ -5,11 +5,10 @@ import logging
 from dashboard import create_app
 from dashboard.extensions import socketio
 
-from server.config import SERVER_CONFIG, apply_dashboard_env
+from server.config import SERVER_CONFIG
 
 
 def main() -> None:
-    apply_dashboard_env()
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
     app = create_app()
     socketio.run(
