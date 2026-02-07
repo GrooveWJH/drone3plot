@@ -6,6 +6,7 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 from rich.console import Console
 
 from apps.control import config as cfg
@@ -99,6 +100,8 @@ def run_complex_mission(
     datasource,
     console: Console,
     spec: MissionSpec,
+    should_abort: Callable[[], bool] | None = None,
+    on_progress: Callable[[int, int], None] | None = None,
 ) -> None:
     plane_approach = PlaneController(
         cfg.KP_XY,
@@ -159,6 +162,8 @@ def run_complex_mission(
     control_interval = 1.0 / cfg.CONTROL_FREQUENCY
     last_print = 0.0
     while True:
+        if should_abort and should_abort():
+            raise RuntimeError("Mission aborted by operator.")
         loop_start = time.time()
         position = datasource.get_position()
         current_yaw = datasource.get_yaw()
@@ -179,6 +184,8 @@ def run_complex_mission(
             yaw_controller=yaw_controller,
             vertical_controller=vertical_controller,
         )
+        if on_progress:
+            on_progress(ctx.waypoint_index, total_tasks)
         if loop_start - last_print >= 0.5:
             target_z = 0.0 if info.target_z is None else info.target_z
             current_z = 0.0 if info.current_z is None else info.current_z

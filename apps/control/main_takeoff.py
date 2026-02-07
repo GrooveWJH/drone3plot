@@ -14,7 +14,7 @@ import time
 import select
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Protocol
 
 if __package__ is None:
     project_root = Path(__file__).resolve().parents[2]
@@ -36,8 +36,13 @@ from apps.control.core.pid import PIDController  # noqa: E402
 from apps.control.core.pose_service import PoseService  # noqa: E402
 
 
+class PoseFeed(Protocol):
+    def latest(self) -> dict[str, object | None]:
+        ...
+
+
 def _wait_for_slam_height(
-    pose_service: PoseService, timeout: float = 30.0
+    pose_service: PoseFeed, timeout: float = 30.0
 ) -> Optional[float]:
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -68,7 +73,7 @@ def _land(
     mqtt,
     console: Console,
     state: TakeoffState,
-    pose_service: PoseService,
+    pose_service: PoseFeed,
     stable_window: float = 3.0,
     stable_delta: float = 0.1,
 ) -> bool:
@@ -118,7 +123,7 @@ def _run_takeoff(
     mqtt,
     console: Console,
     state: TakeoffState,
-    pose_service: PoseService,
+    pose_service: PoseFeed,
     auto_land_on_fail: bool = False,
 ) -> bool:
     target_height = cfg.VERTICAL_TARGET_HEIGHT

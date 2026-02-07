@@ -34,11 +34,11 @@ from rich.panel import Panel  # noqa: E402
 from apps.control import config as cfg  # noqa: E402
 from apps.control.core.complex_runtime import init_context, init_phase, step_complex  # noqa: E402
 from apps.control.core.complex_state import ControlState  # noqa: E402
-from apps.control.core.controller import (
+from apps.control.core.controller import (  # noqa: E402
     PlaneController,
     YawOnlyController,
     get_yaw_error,
-)  # noqa: E402
+)
 from apps.control.core.datasource import create_datasource  # noqa: E402
 from apps.control.core.pid import PIDController  # noqa: E402
 from apps.control.io.logger import DataLogger  # noqa: E402
