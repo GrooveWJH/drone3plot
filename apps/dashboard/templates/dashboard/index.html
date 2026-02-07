@@ -23,7 +23,19 @@
         <label>MQTT 密码
           <input type="password" name="DJI_MQTT_PASSWORD" value="{{ config_values.DJI_MQTT_PASSWORD }}" />
         </label>
+        <label>DRC 用户 ID
+          <input type="text" name="DJI_USER_ID" value="{{ config_values.DJI_USER_ID }}" />
+        </label>
+        <label>DRC 呼号
+          <input type="text" name="DJI_USER_CALLSIGN" value="{{ config_values.DJI_USER_CALLSIGN }}" />
+        </label>
       </div>
+      <div class="action-row">
+        <button class="action-button primary with-icon" type="button" data-config-apply>
+          应用配置
+        </button>
+      </div>
+      <div class="feedback" data-config-feedback></div>
     </form>
   </section>
 
@@ -80,6 +92,7 @@
           拍照
         </button>
       </div>
+      <div class="feedback" data-trajectory-status>任务状态：待命</div>
     </article>
 
     <article class="card control-card" data-live-card>
