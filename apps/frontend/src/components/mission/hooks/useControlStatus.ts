@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useDrcStateMachine, type DrcState } from '../state/drcStateMachine'
+import { type DrcState, useDrcStateMachine } from '../state/drcStateMachine'
 
 export type ControlState = DrcState
 
@@ -12,17 +12,19 @@ export const useControlStatus = () => {
 
     const fetchStatus = async () => {
       try {
-        const response = await fetch('/api/control/auth/status')
+        const response = await fetch('/api/drone/status')
         if (!response.ok) throw new Error('status')
         const payload = (await response.json()) as {
-          state?: string
-          last_error?: string | null
+          drone?: {
+            drc_state?: string | null
+            last_error?: string | null
+          }
           error?: string
         }
-        const rawState = payload.state ?? 'disconnected'
+        const rawState = payload.drone?.drc_state ?? 'disconnected'
         const nextState = (rawState as ControlState) ?? 'disconnected'
         if (isMounted) {
-          updateStatus(nextState, payload.last_error ?? null)
+          updateStatus(nextState, payload.drone?.last_error ?? null)
         }
         return nextState
       } catch {
@@ -37,7 +39,9 @@ export const useControlStatus = () => {
       try {
         const response = await fetch('/api/telemetry')
         if (!response.ok) throw new Error('telemetry')
-        const payload = (await response.json()) as { battery?: { percent?: number } }
+        const payload = (await response.json()) as {
+          battery?: { percent?: number }
+        }
         const percent = payload?.battery?.percent
         if (typeof percent === 'number' && Number.isFinite(percent)) {
           const clamped = Math.max(0, Math.min(100, percent))

@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
 import type { RefObject } from 'react'
+import { useEffect } from 'react'
 import type { Group } from 'three'
 import { degToRad } from '../utils'
 
@@ -7,14 +7,12 @@ type UseCloudTransformSyncParams = {
   cloudGroupRef: RefObject<Group | null>
   cloudRotation: [number, number, number]
   cloudOffset: [number, number, number]
-  hasPointCloud: boolean
 }
 
 export const useCloudTransformSync = ({
   cloudGroupRef,
   cloudRotation,
   cloudOffset,
-  hasPointCloud,
 }: UseCloudTransformSyncParams) => {
   useEffect(() => {
     const group = cloudGroupRef.current
@@ -23,7 +21,7 @@ export const useCloudTransformSync = ({
     group.rotation.set(
       degToRad(cloudRotation[0]),
       degToRad(cloudRotation[1]),
-      degToRad(cloudRotation[2])
+      degToRad(cloudRotation[2]),
     )
-  }, [cloudOffset, cloudRotation, cloudGroupRef, hasPointCloud])
+  }, [cloudOffset, cloudRotation, cloudGroupRef])
 }

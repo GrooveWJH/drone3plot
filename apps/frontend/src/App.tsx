@@ -1,10 +1,8 @@
-import './App.css'
-import MissionPlanner from './components/mission/MissionPlanner'
+import "./App.css";
+import MissionPlanner from "./components/mission/MissionPlanner";
 
 function App() {
-  return (
-    <MissionPlanner />
-  )
+	return <MissionPlanner />;
 }
 
-export default App
+export default App;

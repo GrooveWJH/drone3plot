@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import Sidebar from '../Sidebar'
-import MissionTopbar from './MissionTopbar'
-import MissionViewport from './MissionViewport'
-import MissionDock from './MissionDock'
-import { useControlStatus } from './hooks/useControlStatus'
-import { useCloudTransformState } from './hooks/useCloudTransformState'
-import { useCloudTransformSync } from './hooks/useCloudTransformSync'
 import { usePerfObservers } from '../../lib/pointcloud/src/usePerfObservers'
 import { usePointCloudLoader } from '../../lib/pointcloud/src/usePointCloudLoader'
+import Sidebar from '../Sidebar'
+import { useCloudTransformState } from './hooks/useCloudTransformState'
+import { useCloudTransformSync } from './hooks/useCloudTransformSync'
+import { useControlStatus } from './hooks/useControlStatus'
 import { useSlamPose } from './hooks/useSlamPose'
 import { useTrajectoryState } from './hooks/useTrajectoryState'
 import { useWaypointsState } from './hooks/useWaypointsState'
+import MissionDock from './MissionDock'
+import MissionTopbar from './MissionTopbar'
+import MissionViewport from './MissionViewport'
 import { useMissionStateMachine } from './state/missionStateMachine'
 import { normalizeDegrees, radToDeg } from './utils'
 
@@ -75,7 +75,6 @@ const MissionPlanner = () => {
     cloudGroupRef,
     cloudRotation,
     cloudOffset,
-    hasPointCloud,
   })
   const {
     waypoints,
@@ -124,7 +123,7 @@ const MissionPlanner = () => {
         takePhoto: Boolean(waypoint.takePhoto),
       })),
     }),
-    [trajectoryId, trajectoryName, waypoints]
+    [trajectoryId, trajectoryName, waypoints],
   )
 
   useEffect(() => {
@@ -170,7 +169,7 @@ const MissionPlanner = () => {
       if (!canEditWaypoints) return
       handleDeleteWaypoint(id)
     },
-    [handleDeleteWaypoint, canEditWaypoints]
+    [handleDeleteWaypoint, canEditWaypoints],
   )
 
   const handleReorderWaypointLocked = useCallback(
@@ -178,7 +177,7 @@ const MissionPlanner = () => {
       if (!canEditWaypoints) return
       handleReorderWaypoint(id, direction)
     },
-    [handleReorderWaypoint, canEditWaypoints]
+    [handleReorderWaypoint, canEditWaypoints],
   )
 
   const handleUpdateWaypointLocked = useCallback(
@@ -186,12 +185,12 @@ const MissionPlanner = () => {
       id: string,
       position: [number, number, number],
       rotation: [number, number, number],
-      takePhoto?: boolean
+      takePhoto?: boolean,
     ) => {
       if (!canEditWaypoints) return
       handleUpdateWaypoint(id, position, rotation, takePhoto)
     },
-    [handleUpdateWaypoint, canEditWaypoints]
+    [handleUpdateWaypoint, canEditWaypoints],
   )
 
   const handleTogglePhotoLocked = useCallback(
@@ -199,7 +198,7 @@ const MissionPlanner = () => {
       if (!canEditWaypoints) return
       handleTogglePhoto(id, value)
     },
-    [handleTogglePhoto, canEditWaypoints]
+    [handleTogglePhoto, canEditWaypoints],
   )
 
   const handleSelectWaypointLocked = useCallback(
@@ -207,7 +206,7 @@ const MissionPlanner = () => {
       if (!canEditWaypoints) return
       handleSelectWaypointFromSidebar(id)
     },
-    [handleSelectWaypointFromSidebar, canEditWaypoints]
+    [handleSelectWaypointFromSidebar, canEditWaypoints],
   )
 
   const handleSelectWaypointSceneLocked = useCallback(
@@ -215,7 +214,7 @@ const MissionPlanner = () => {
       if (!canEditWaypoints) return
       handleSelectWaypointFromScene(id)
     },
-    [handleSelectWaypointFromScene, canEditWaypoints]
+    [handleSelectWaypointFromScene, canEditWaypoints],
   )
 
   return (

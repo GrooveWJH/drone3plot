@@ -1,33 +1,33 @@
 @media (max-width: 1080px) {
-  .workspace {
-    grid-template-columns: 1fr;
-  }
+	.workspace {
+		grid-template-columns: 1fr;
+	}
 
-  .control-dock {
-    max-height: 45vh;
-  }
+	.control-dock {
+		max-height: 45vh;
+	}
 }
 
 @media (max-width: 720px) {
-  .app-topbar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+	.app-topbar {
+		flex-direction: column;
+		align-items: flex-start;
+	}
 
-  .workspace {
-    padding: 1rem;
-  }
+	.workspace {
+		padding: 1rem;
+	}
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
+	.stats-grid {
+		grid-template-columns: 1fr;
+	}
 
-  .meta-card {
-    min-width: 0;
-    flex: 1;
-  }
+	.meta-card {
+		min-width: 0;
+		flex: 1;
+	}
 
-  .transform-columns {
-    grid-template-columns: 1fr;
-  }
+	.transform-columns {
+		grid-template-columns: 1fr;
+	}
 }

@@ -1,148 +1,148 @@
 .waypoint-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
 }
 
 .waypoint-card {
-  padding: 0.75rem;
-  border-radius: 16px;
-  border: 1px solid rgba(27, 26, 23, 0.12);
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
+	padding: 0.75rem;
+	border-radius: 16px;
+	border: 1px solid rgba(27, 26, 23, 0.12);
+	background: rgba(255, 255, 255, 0.8);
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
 }
 
 .waypoint-card.selected {
-  border-color: rgba(214, 106, 60, 0.6);
-  box-shadow: 0 0 0 2px rgba(214, 106, 60, 0.15);
+	border-color: rgba(214, 106, 60, 0.6);
+	box-shadow: 0 0 0 2px rgba(214, 106, 60, 0.15);
 }
 
 .waypoint-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
 .waypoint-index {
-  font-weight: 600;
-  letter-spacing: 0.04em;
+	font-weight: 600;
+	letter-spacing: 0.04em;
 }
 
 .waypoint-actions {
-  display: flex;
-  gap: 0.4rem;
+	display: flex;
+	gap: 0.4rem;
 }
 
 .waypoint-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
 }
 
 .waypoint-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem 0.8rem;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.6rem 0.8rem;
 }
 
 .field-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-muted);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.25rem;
+	font-size: 0.65rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--ink-muted);
 }
 
 .field-stack input {
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid rgba(27, 26, 23, 0.2);
-  background: var(--panel-strong);
-  color: var(--ink);
-  padding: 0.2rem 0.35rem;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  appearance: textfield;
+	width: 100%;
+	border-radius: 8px;
+	border: 1px solid rgba(27, 26, 23, 0.2);
+	background: var(--panel-strong);
+	color: var(--ink);
+	padding: 0.2rem 0.35rem;
+	font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+	appearance: textfield;
 }
 
 .field-stack input::-webkit-outer-spin-button,
 .field-stack input::-webkit-inner-spin-button {
-  appearance: none;
-  margin: 0;
+	appearance: none;
+	margin: 0;
 }
 
 .waypoint-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
 @media (max-width: 720px) {
-  .waypoint-grid {
-    grid-template-columns: 1fr;
-  }
+	.waypoint-grid {
+		grid-template-columns: 1fr;
+	}
 }
 
 .toggle-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-muted);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.65rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--ink-muted);
 }
 
 .photo-toggle {
-  gap: 0.5rem;
-  text-transform: none;
-  letter-spacing: 0.03em;
-  font-size: 0.75rem;
+	gap: 0.5rem;
+	text-transform: none;
+	letter-spacing: 0.03em;
+	font-size: 0.75rem;
 }
 
 .photo-toggle input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
 }
 
 .photo-toggle .toggle-box {
-  width: 18px;
-  height: 18px;
-  border-radius: 6px;
-  border: 1px solid rgba(27, 26, 23, 0.25);
-  background: rgba(255, 255, 255, 0.9);
-  display: grid;
-  place-items: center;
-  transition: all 0.2s ease;
+	width: 18px;
+	height: 18px;
+	border-radius: 6px;
+	border: 1px solid rgba(27, 26, 23, 0.25);
+	background: rgba(255, 255, 255, 0.9);
+	display: grid;
+	place-items: center;
+	transition: all 0.2s ease;
 }
 
 .photo-toggle .toggle-box::after {
-  content: '';
-  width: 8px;
-  height: 4px;
-  border-left: 2px solid transparent;
-  border-bottom: 2px solid transparent;
-  transform: rotate(-45deg);
-  transition: border-color 0.2s ease;
+	content: "";
+	width: 8px;
+	height: 4px;
+	border-left: 2px solid transparent;
+	border-bottom: 2px solid transparent;
+	transform: rotate(-45deg);
+	transition: border-color 0.2s ease;
 }
 
 .photo-toggle input:checked + .toggle-box {
-  background: rgba(59, 111, 95, 0.2);
-  border-color: rgba(59, 111, 95, 0.6);
+	background: rgba(59, 111, 95, 0.2);
+	border-color: rgba(59, 111, 95, 0.6);
 }
 
 .photo-toggle input:checked + .toggle-box::after {
-  border-left-color: var(--accent-2);
-  border-bottom-color: var(--accent-2);
+	border-left-color: var(--accent-2);
+	border-bottom-color: var(--accent-2);
 }
 
 .field-help {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--ink-muted);
+	margin: 0;
+	font-size: 0.75rem;
+	color: var(--ink-muted);
 }
